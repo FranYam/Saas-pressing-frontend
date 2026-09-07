@@ -21,7 +21,7 @@ const step1Schema = z.object({
 const step2Schema = z
   .object({
     fullName: z.string().min(3, 'Le nom complet est requis.'),
-    username: z.string().min(3, 'L'identifiant doit contenir au moins 3 caractères (téléphone ou pseudo).'),
+    username: z.string().min(3, `L'identifiant doit contenir au moins 3 caractères (téléphone ou pseudo).`),
     password: z.string().min(6, 'Au moins 6 caractères.'),
     confirmPassword: z.string()
   })
