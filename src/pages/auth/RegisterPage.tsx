@@ -21,7 +21,7 @@ const step1Schema = z.object({
 const step2Schema = z
   .object({
     fullName: z.string().min(3, 'Le nom complet est requis.'),
-    email: z.string().email('Adresse email invalide.'),
+    username: z.string().min(3, 'L'identifiant doit contenir au moins 3 caractères (téléphone ou pseudo).'),
     password: z.string().min(6, 'Au moins 6 caractères.'),
     confirmPassword: z.string()
   })
@@ -67,7 +67,7 @@ export default function RegisterPage() {
   const [serverError, setServerError] = useState('');
 
   const form1 = useForm<Step1>({ resolver: zodResolver(step1Schema), defaultValues: { pressingName: '', city: 'Ouagadougou', phone: '+226 ', address: '' } });
-  const form2 = useForm<Step2>({ resolver: zodResolver(step2Schema), defaultValues: { fullName: '', email: '', password: '', confirmPassword: '' } });
+  const form2 = useForm<Step2>({ resolver: zodResolver(step2Schema), defaultValues: { fullName: '', username: '', password: '', confirmPassword: '' } });
   const form3 = useForm<Step3>({ resolver: zodResolver(step3Schema), defaultValues: { primaryColor: '#C75B39' } });
 
   const primaryColor = form3.watch('primaryColor');
@@ -87,13 +87,16 @@ export default function RegisterPage() {
         phone: data1.phone,
         address: data1.address,
         fullName: data2.fullName,
-        email: data2.email,
+        username: data2.username,
         password: data2.password,
         primaryColor: data3.primaryColor
       });
       navigate('/dashboard', { replace: true });
-    } catch (err) {
-      setServerError(err instanceof Error ? err.message : 'Une erreur est survenue. Réessayez.');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: Record<string, string[]> } };
+      const apiErrors = axiosErr?.response?.data;
+      const firstError = apiErrors ? Object.values(apiErrors).flat()[0] : null;
+      setServerError(firstError ?? (err instanceof Error ? err.message : 'Une erreur est survenue. Réessayez.'));
     } finally {
       setSubmitting(false);
     }
@@ -162,7 +165,7 @@ export default function RegisterPage() {
           {step === 1 && (
             <form onSubmit={nextFrom2} className="space-y-5" noValidate>
               <TextField label="Nom complet du responsable" placeholder="Ex : Aïcha Ouédraogo" autoComplete="name" required error={form2.formState.errors.fullName?.message} {...form2.register('fullName')} />
-              <TextField label="Adresse email" type="email" placeholder="vous@pressing.bf" autoComplete="email" required error={form2.formState.errors.email?.message} {...form2.register('email')} />
+              <TextField label="Identifiant du responsable (téléphone ou pseudo)" type="text" placeholder="Ex : 70123456 ou aichaouedraogo" autoComplete="username" required error={form2.formState.errors.username?.message} {...form2.register('username')} />
               <div className="grid gap-5 sm:grid-cols-2">
                 <TextField label="Mot de passe" type="password" placeholder="••••••••" autoComplete="new-password" required error={form2.formState.errors.password?.message} {...form2.register('password')} />
                 <TextField label="Confirmer le mot de passe" type="password" placeholder="••••••••" autoComplete="new-password" required error={form2.formState.errors.confirmPassword?.message} {...form2.register('confirmPassword')} />
