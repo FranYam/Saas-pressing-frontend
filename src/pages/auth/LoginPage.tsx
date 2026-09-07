@@ -10,8 +10,8 @@ import { TextField } from '@/components/forms/FormFields';
 import { formatFCFA } from '@/lib/format';
 
 const loginSchema = z.object({
-  email: z.string().email('Veuillez saisir une adresse email valide.'),
-  password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères.')
+  username: z.string().min(1, 'Veuillez saisir votre identifiant (téléphone ou nom d'utilisateur).'),
+  password: z.string().min(1, 'Veuillez saisir votre mot de passe.')
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -35,10 +35,9 @@ const FEATURES = [
 ];
 
 const DEMO_ACCOUNTS = [
-  { label: 'Gérant', email: 'gerant@pressnet.bf', detail: 'Accès complet' },
-  { label: 'Employé', email: 'employe@pressnet.bf', detail: 'Comptoir & clients' },
-  { label: 'Coursier', email: 'coursier@pressnet.bf', detail: 'Missions & itinéraires' },
-  { label: 'Client', email: 'client@pressnet.bf', detail: 'Suivi & paiement' }
+  { label: 'Gérant', username: 'gerant', detail: 'Accès complet' },
+  { label: 'Employé', username: 'employe', detail: 'Comptoir & clients' },
+  { label: 'Coursier', username: 'coursier', detail: 'Missions & itinéraires' },
 ];
 export default function LoginPage() {
   const { login, homeForRole } = useAuth();
@@ -55,25 +54,28 @@ export default function LoginPage() {
     formState: { errors }
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' }
+    defaultValues: { username: '', password: '' }
   });
 
   const onSubmit = async (data: LoginForm) => {
     setServerError('');
     setSubmitting(true);
     try {
-      const loggedIn = await login(data.email, data.password);
+      const loggedIn = await login(data.username, data.password);
       const from = (location.state as { from?: string } | null)?.from;
       navigate(from ?? homeForRole(loggedIn.role), { replace: true });
-    } catch (err) {
-      setServerError(err instanceof Error ? err.message : 'Une erreur est survenue. Réessayez.');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { detail?: string } } };
+      const msg = axiosErr?.response?.data?.detail
+        ?? (err instanceof Error ? err.message : 'Identifiant ou mot de passe incorrect.');
+      setServerError(msg);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const fillDemo = (email: string) => {
-    setValue('email', email);
+  const fillDemo = (username: string) => {
+    setValue('username', username);
   };
 
   return (
@@ -140,13 +142,13 @@ export default function LoginPage() {
             )}
 
             <TextField
-              label="Adresse email"
-              type="email"
-              placeholder="vous@pressing.bf"
-              autoComplete="email"
+              label="Identifiant (téléphone ou nom d'utilisateur)"
+              type="text"
+              placeholder="Ex : 70123456 ou admin"
+              autoComplete="username"
               required
-              error={errors.email?.message}
-              {...register('email')}
+              error={errors.username?.message}
+              {...register('username')}
             />
 
             <div>
@@ -193,14 +195,14 @@ export default function LoginPage() {
           <div className="card mt-8 p-4">
             <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
               <ShieldCheck size={14} className="text-primary" aria-hidden="true" />
-              Comptes de démonstration — cliquez pour remplir l'email, puis saisissez n'importe quel mot de passe
+              Comptes de test — cliquez pour remplir l'identifiant
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               {DEMO_ACCOUNTS.map((d) => (
                 <button
-                  key={d.email}
+                  key={d.username}
                   type="button"
-                  onClick={() => fillDemo(d.email)}
+                  onClick={() => fillDemo(d.username)}
                   className="rounded-lg border border-slate-200 px-3 py-2 text-left text-xs transition-colors hover:border-primary hover:bg-primary-50"
                 >
                   <span className="block font-semibold text-charcoal">{d.label}</span>
