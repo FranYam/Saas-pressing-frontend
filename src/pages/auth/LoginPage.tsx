@@ -10,7 +10,7 @@ import { TextField } from '@/components/forms/FormFields';
 import { formatFCFA } from '@/lib/format';
 
 const loginSchema = z.object({
-  username: z.string().min(1, 'Veuillez saisir votre identifiant (téléphone ou nom d'utilisateur).'),
+  username: z.string().min(1, `Veuillez saisir votre identifiant (téléphone ou nom d'utilisateur).`),
   password: z.string().min(1, 'Veuillez saisir votre mot de passe.')
 });
 
