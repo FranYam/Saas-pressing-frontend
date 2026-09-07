@@ -21,7 +21,7 @@ export function formatPhoneInput(raw: string): string {
 }
 
 export function isValidBurkinaPhone(phone: string): boolean {
-  return /^\+226\s(70|71|72|74|75|76|77|78|65|66|67|68)\s\d{2}\s\d{2}\s\d{2}$/.test(phone);
+  return /^\+226\s\d{2}\s\d{2}\s\d{2}\s\d{2}$/.test(phone);
 }
 
 // ─── Dates ───────────────────────────────────────────────────────────────────
