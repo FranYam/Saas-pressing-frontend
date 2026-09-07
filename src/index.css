@@ -1,0 +1,128 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-sand text-charcoal font-sans antialiased;
+    font-size: 14px;
+  }
+
+  h1 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+
+  ::selection {
+    @apply bg-primary-200 text-primary-900;
+  }
+
+  /* Navigation clavier visible et cohérente */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary-400 ring-offset-1 ring-offset-white;
+  }
+
+  /* Chiffres alignés pour les montants */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* ── Cartes ─────────────────────────────────────────────── */
+  .card {
+    @apply rounded-xl border border-slate-200/80 bg-white shadow-card;
+  }
+
+  .card-hover {
+    @apply transition-shadow duration-200 hover:shadow-card-hover;
+  }
+
+  .card-title {
+    @apply text-base font-semibold text-charcoal;
+  }
+
+  /* ── Boutons ────────────────────────────────────────────── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-primary/25 transition-all duration-150 hover:bg-primary-600 hover:shadow active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-charcoal shadow-sm transition-all duration-150 hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-charcoal;
+  }
+
+  /* ── Formulaires ────────────────────────────────────────── */
+  .input-base {
+    @apply w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-charcoal transition-colors placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:bg-slate-50;
+  }
+
+  .label-base {
+    @apply mb-1.5 block text-xs font-medium text-slate-600;
+  }
+
+  /* ── En-têtes de page ───────────────────────────────────── */
+  .page-subtitle {
+    @apply mt-1 text-sm text-slate-500;
+  }
+
+  .section-label {
+    @apply text-xs font-semibold tracking-wide text-slate-500 uppercase;
+  }
+}
+
+/* ── Animations d'entrée ───────────────────────────────────── */
+@keyframes pressnet-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pressnet-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: pressnet-fade-in 0.15s ease-out both;
+}
+
+.animate-slide-up {
+  animation: pressnet-slide-up 0.2s ease-out both;
+}
+
+/* ── Décor : grille fine pour les panneaux sombres ────────── */
+.bg-grid-dark {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+/* Scrollbar discrète pour les longues listes */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-slate-300;
+}
