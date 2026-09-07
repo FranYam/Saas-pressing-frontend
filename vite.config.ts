@@ -45,6 +45,16 @@ export default defineConfig({
       }
     })
   ],
+  server: {
+    proxy: {
+      // Proxy toutes les requêtes /api/* vers le backend Django sur Render (dev uniquement)
+      '/api': {
+        target: 'https://saas-pressing.onrender.com',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
