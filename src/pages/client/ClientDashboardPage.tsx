@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -11,12 +11,14 @@ import {
   Phone,
   Clock3,
   Sparkles,
-  RefreshCw
+  RefreshCw,
+  Tags
 } from 'lucide-react';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { PortalHero } from '@/components/layout/PortalHero';
 import { useClientAccess } from '@/context/ClientAccessContext';
 import { useAppStore } from '@/store/useAppStore';
+import { fetchPortalCatalog, type PortalCatalogItem } from '@/services/api';
 import { StatCard } from '@/components/ui/StatCard';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -43,8 +45,17 @@ function RefreshButton({ onClick }: { onClick: () => void }) {
 
 export default function ClientDashboardPage() {
   const navigate = useNavigate();
-  const { data, loading, error, refresh, clear } = useClientAccess();
+  const { data, access, loading, error, refresh, clear } = useClientAccess();
   const settings = useAppStore((s) => s.settings);
+
+  // Catalogue du pressing (tarifs publics)
+  const [catalog, setCatalog] = useState<PortalCatalogItem[]>([]);
+  useEffect(() => {
+    if (!data?.pressing_id) return;
+    fetchPortalCatalog(access?.mode === 'account' ? access.token : undefined, data.pressing_id)
+      .then(setCatalog)
+      .catch(() => setCatalog([]));
+  }, [data?.pressing_id, access]);
 
   const orders = useMemo(
     () => [...(data?.orders ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
@@ -178,6 +189,32 @@ export default function ClientDashboardPage() {
                   {recent.length === 0 && <li className="px-5 py-6 text-center text-sm text-slate-400">Aucune commande</li>}
                 </ul>
               </section>
+
+              {/* Catalogue / tarifs du pressing */}
+              {catalog.length > 0 && (
+                <section className="card overflow-hidden" aria-label="Tarifs du pressing">
+                  <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                    <h2 className="card-title flex items-center gap-2">
+                      <Tags size={15} className="text-primary" aria-hidden="true" />
+                      Nos tarifs
+                    </h2>
+                    <Link to="/client/collect" className="flex items-center text-xs font-semibold text-primary hover:underline">
+                      Commander <ChevronRight size={14} aria-hidden="true" />
+                    </Link>
+                  </div>
+                  <ul className="max-h-56 divide-y divide-slate-50 overflow-y-auto scrollbar-thin">
+                    {catalog.map((t) => (
+                      <li key={t.id} className="flex items-center justify-between px-5 py-2.5 text-sm">
+                        <span className="truncate text-slate-600">
+                          {t.name}
+                          {t.category && <span className="ml-2 text-xs text-slate-400">{t.category}</span>}
+                        </span>
+                        <span className="ml-3 shrink-0 font-semibold tabular-nums">{formatFCFA(parseFloat(t.price))}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
 
               <section className="card p-5" aria-label="Contact pressing">
                 <h2 className="card-title mb-3">Besoin d'aide ?</h2>

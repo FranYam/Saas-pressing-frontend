@@ -363,38 +363,117 @@ export function logout(): void {
 export interface ClientPortalData {
   name: string;
   phone: string;
+  pressing: string;
+  pressing_id?: string;
   orders: Order[];
+}
+
+/** Session obtenue à l'inscription / connexion d'un compte client */
+export type ClientPortalSession = ClientPortalData & { token: string };
+
+export interface PortalPressing {
+  id: string;
+  name: string;
+  phone: string;
+}
+
+export interface PortalCatalogItem {
+  id: string;
+  name: string;
+  category: string;
+  price: string;
+}
+
+/** GET /api/v1/portal/pressings/ — liste publique (choix à l'inscription) */
+export async function fetchPortalPressings(): Promise<PortalPressing[]> {
+  const { data } = await api.get<PortalPressing[]>('/api/v1/portal/pressings/');
+  return data;
+}
+
+/** POST /api/v1/portal/register/ — crée un compte client (ou promeut la fiche comptoir) */
+export async function portalRegister(payload: {
+  pressing: string;
+  name: string;
+  phone: string;
+  password: string;
+}): Promise<ClientPortalSession> {
+  const { data } = await api.post<RawPortalPayload & { token: string }>('/api/v1/portal/register/', payload);
+  return { ...toPortalData(data), token: data.token };
+}
+
+/** POST /api/v1/portal/login/ — téléphone + mot de passe */
+export async function portalLogin(phone: string, password: string): Promise<ClientPortalSession> {
+  const { data } = await api.post<RawPortalPayload & { token: string }>('/api/v1/portal/login/', { phone, password });
+  return { ...toPortalData(data), token: data.token };
+}
+
+/** GET /api/v1/portal/me/ — session courante (en-tête X-Portal-Token) */
+export async function fetchPortalMe(token: string): Promise<ClientPortalData> {
+  const { data } = await api.get<RawPortalPayload>('/api/v1/portal/me/', {
+    headers: { 'X-Portal-Token': token }
+  });
+  return toPortalData(data);
+}
+
+/** DELETE /api/v1/portal/me/ — déconnexion (révoque le jeton) */
+export async function portalLogout(token: string): Promise<void> {
+  await api.delete('/api/v1/portal/me/', { headers: { 'X-Portal-Token': token } });
+}
+
+/** GET /api/v1/portal/catalog/ — tarifs actifs du pressing */
+export async function fetchPortalCatalog(token?: string, pressingId?: string): Promise<PortalCatalogItem[]> {
+  const { data } = await api.get<PortalCatalogItem[]>('/api/v1/portal/catalog/', {
+    headers: token ? { 'X-Portal-Token': token } : undefined,
+    params: token ? undefined : { pressing: pressingId }
+  });
+  return data;
+}
+
+/** POST /api/v1/portal/collectes/ — initie une collecte (vraie commande EN_LIGNE) */
+export async function createPortalCollecte(
+  token: string,
+  payload: {
+    collect_address: string;
+    creneau?: string;
+    notes?: string;
+    articles: { clothing_type: string; quantity: number }[];
+  }
+): Promise<{ id: string; ticket_number: string; total_price: string }> {
+  const { data } = await api.post('/api/v1/portal/collectes/', payload, {
+    headers: { 'X-Portal-Token': token }
+  });
+  return data;
+}
+
+/** Complète les commandes du portail : montant payé + historique lisible */
+function mapPortalOrder(cmd: ApiCommande & { amount_paid?: string }): Order {
+  const order = mapApiOrder(cmd);
+  order.paidAmount = parseFloat(cmd.amount_paid ?? '0');
+  const flow: OrderStatus[] = ['recu', 'traitement', 'pret', 'livre'];
+  const idx = flow.indexOf(order.status);
+  order.statusHistory = flow.slice(0, idx + 1).map((status) => ({ status, date: cmd.created_at }));
+  return order;
+}
+
+/** Réponse brute du portail (commandes au format API) */
+type RawPortalPayload = Omit<ClientPortalData, 'orders'> & {
+  orders: (ApiCommande & { amount_paid?: string })[];
+};
+
+function toPortalData(raw: RawPortalPayload): ClientPortalData {
+  return { ...raw, orders: raw.orders.map(mapPortalOrder) };
 }
 
 /**
  * GET /api/v1/portal/orders/?ticket=...&phone=...
  * Endpoint public : valide le couple (n° de ticket, téléphone) et retourne
- * la fiche client + toutes ses commandes. À ajouter côté Django (voir README).
+ * la fiche client + toutes ses commandes (accès rapide sans compte).
  */
 export async function fetchClientPortal(ticket: string, phone: string): Promise<ClientPortalData> {
-  const { data } = await api.get<{ name: string; phone: string; orders: ApiCommande[] }>(
-    '/api/v1/portal/orders/',
-    { params: { ticket, phone } }
-  );
-
-  const normalizePhone = (p: string) => p.replace(/\D/g, '');
-  const orders = data.orders.map((cmd) => {
-    const order = mapApiOrder(cmd);
-    const withPaid = cmd as ApiCommande & { amount_paid?: string };
-    order.paidAmount = parseFloat(withPaid.amount_paid ?? '0');
-
-    // Reconstitue un historique lisible : étapes passées datées à la création (approx.)
-    const flow: OrderStatus[] = ['recu', 'traitement', 'pret', 'livre'];
-    const idx = flow.indexOf(order.status);
-    order.statusHistory = flow.slice(0, idx + 1).map((status) => ({ status, date: cmd.created_at }));
-    return order;
+  const { data } = await api.get<RawPortalPayload>('/api/v1/portal/orders/', {
+    params: { ticket, phone }
   });
-
-  return {
-    name: data.name,
-    phone: normalizePhone(data.phone) === normalizePhone(phone) ? data.phone : phone,
-    orders,
-  };
+  return toPortalData(data);
 }
 
 // ─── Profil utilisateur ───────────────────────────────────────────────────────
@@ -752,14 +831,35 @@ export async function saveSettings(settings: PressingSettings): Promise<Pressing
 
 // ─── Tarification (non disponible dans l'API — mocks maintenus) ──────────────
 
+/** GET /api/v1/catalog/ — catalogue du pressing (staff JWT) */
 export async function fetchPrices(): Promise<PriceItem[]> {
-  return [...MOCK_PRICES];
+  try {
+    const { data } = await api.get<ApiPaginated<{ id: string; name: string; category: string; price: string; is_active: boolean }>>(
+      '/api/v1/catalog/'
+    );
+    return data.results
+      .filter((t) => t.is_active)
+      .map((t) => ({ id: t.id, name: t.name, category: t.category || 'Vêtements', price: parseFloat(t.price) }));
+  } catch {
+    // Hors ligne / serveur absent : tarifs standard
+    return [...MOCK_PRICES];
+  }
 }
 
+/** PUT /api/v1/catalog/bulk/ — remplace tout le catalogue (staff JWT) */
 export async function savePrices(prices: PriceItem[]): Promise<PriceItem[]> {
-  MOCK_PRICES.length = 0;
-  MOCK_PRICES.push(...prices);
-  return [...MOCK_PRICES];
+  await api.put(
+    '/api/v1/catalog/bulk/',
+    {
+      items: prices.map((p) => ({
+        name: p.name,
+        category: p.category,
+        price: p.price.toFixed(2),
+        is_active: true
+      }))
+    }
+  );
+  return fetchPrices();
 }
 
 // ─── Notifications (non disponibles dans l'API — mocks maintenus) ─────────────

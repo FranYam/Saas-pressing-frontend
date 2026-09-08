@@ -1,16 +1,33 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { fetchClientPortal, type ClientPortalData } from '@/services/api';
+import {
+  fetchClientPortal,
+  fetchPortalMe,
+  portalLogin,
+  portalLogout,
+  portalRegister,
+  type ClientPortalData
+} from '@/services/api';
 
 /**
- * Session légère « Espace client » : le client accède à son portail avec son
- * n° de ticket + son téléphone — sans compte ni mot de passe.
+ * Session « Espace client » — deux modes d'accès cohabitent :
+ * - account : compte client (téléphone + mot de passe, jeton X-Portal-Token)
+ *   → permet de consulter, voir le catalogue et demander des collectes ;
+ * - ticket  : accès rapide par n° de ticket + téléphone (lecture seule).
  * La session est conservée en localStorage pour ne pas ressaisir à chaque visite.
  */
 
-interface ClientAccess {
+interface AccountAccess {
+  mode: 'account';
+  token: string;
+}
+
+interface TicketAccess {
+  mode: 'ticket';
   ticket: string;
   phone: string;
 }
+
+type ClientAccess = AccountAccess | TicketAccess;
 
 interface ClientAccessContextValue {
   access: ClientAccess | null;
@@ -18,8 +35,14 @@ interface ClientAccessContextValue {
   data: ClientPortalData | null;
   loading: boolean;
   error: string;
-  /** Valide le couple ticket + téléphone puis ouvre la session */
-  login: (ticket: string, phone: string) => Promise<void>;
+  /** Vrai si le client peut demander une collecte (compte requis) */
+  canRequestCollect: boolean;
+  /** Connexion avec un compte (téléphone + mot de passe) */
+  loginAccount: (phone: string, password: string) => Promise<void>;
+  /** Inscription d'un compte client (pressing + nom + téléphone + mot de passe) */
+  registerAccount: (payload: { pressing: string; name: string; phone: string; password: string }) => Promise<void>;
+  /** Accès rapide par ticket + téléphone */
+  loginTicket: (ticket: string, phone: string) => Promise<void>;
   /** Rafraîchit les données du portail */
   refresh: () => Promise<void>;
   /** Quitte l'espace client */
@@ -32,11 +55,20 @@ const ClientAccessContext = createContext<ClientAccessContextValue | null>(null)
 function readStoredAccess(): ClientAccess | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as ClientAccess) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as ClientAccess | { ticket: string; phone: string };
+    if ('mode' in parsed) return parsed;
+    // Ancien format (ticket seul) — migration silencieuse
+    return { mode: 'ticket', ticket: parsed.ticket, phone: parsed.phone };
   } catch {
     localStorage.removeItem(STORAGE_KEY);
     return null;
   }
+}
+
+function persist(access: ClientAccess | null): void {
+  if (access) localStorage.setItem(STORAGE_KEY, JSON.stringify(access));
+  else localStorage.removeItem(STORAGE_KEY);
 }
 
 export function ClientAccessProvider({ children }: { children: ReactNode }) {
@@ -49,21 +81,19 @@ export function ClientAccessProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError('');
     try {
-      const portal = await fetchClientPortal(a.ticket, a.phone);
+      const portal =
+        a.mode === 'account' ? await fetchPortalMe(a.token) : await fetchClientPortal(a.ticket, a.phone);
       setData(portal);
     } catch (err) {
       const axiosErr = err as { response?: { status?: number; data?: { detail?: string } } };
       const status = axiosErr?.response?.status;
       setData(null);
-      if (status === 404 || status === 403) {
-        // Ticket/téléphone invalides : on ferme la session périmée
-        localStorage.removeItem(STORAGE_KEY);
+      if (status === 401 || status === 403 || status === 404) {
+        // Session périmée (jeton révoqué, ticket retiré) : on la ferme
+        persist(null);
         setAccess(null);
       } else {
-        setError(
-          axiosErr?.response?.data?.detail ??
-            "L'espace client nécessite une mise à jour du serveur. Réessayez plus tard."
-        );
+        setError(axiosErr?.response?.data?.detail ?? 'Impossible de charger vos commandes. Réessayez plus tard.');
       }
     } finally {
       setLoading(false);
@@ -74,44 +104,75 @@ export function ClientAccessProvider({ children }: { children: ReactNode }) {
     if (access) void load(access);
   }, [access, load]);
 
-  const login = useCallback(async (ticket: string, phone: string) => {
-    const a = { ticket: ticket.trim(), phone };
-    setLoading(true);
-    setError('');
-    try {
-      const portal = await fetchClientPortal(a.ticket, a.phone);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(a));
-      setAccess(a);
-      setData(portal);
-    } catch (err) {
-      const axiosErr = err as { response?: { status?: number; data?: { detail?: string } } };
-      const status = axiosErr?.response?.status;
-      if (status === 404 || status === 403) {
-        throw new Error('Ticket introuvable. Vérifiez le numéro de ticket et le téléphone saisis.');
-      }
-      throw new Error(
-        axiosErr?.response?.data?.detail ??
-          "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez."
-      );
-    } finally {
-      setLoading(false);
-    }
+  const applySession = useCallback((session: ClientPortalData & { token: string }) => {
+    const next: AccountAccess = { mode: 'account', token: session.token };
+    persist(next);
+    setAccess(next);
+    setData({ name: session.name, phone: session.phone, pressing: session.pressing, pressing_id: session.pressing_id, orders: session.orders });
   }, []);
+
+  const loginAccount = useCallback(
+    async (phone: string, password: string) => {
+      const session = await portalLogin(phone, password);
+      applySession(session);
+    },
+    [applySession]
+  );
+
+  const registerAccount = useCallback(
+    async (payload: { pressing: string; name: string; phone: string; password: string }) => {
+      const session = await portalRegister(payload);
+      applySession(session);
+    },
+    [applySession]
+  );
+
+  const loginTicket = useCallback(
+    async (ticket: string, phone: string) => {
+      // Valide le couple (ticket, téléphone) AVANT d'ouvrir la session :
+      // une erreur 404 remonte à la page d'accès pour être affichée.
+      const portal = await fetchClientPortal(ticket.trim(), phone);
+      const next: TicketAccess = { mode: 'ticket', ticket: ticket.trim(), phone };
+      persist(next);
+      setAccess(next);
+      setData(portal);
+    },
+    []
+  );
 
   const refresh = useCallback(async () => {
     if (access) await load(access);
   }, [access, load]);
 
-  const clear = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
+  const clear = useCallback(async () => {
+    // Révoque le jeton côté serveur avant de fermer la session locale
+    if (access?.mode === 'account') {
+      try {
+        await portalLogout(access.token);
+      } catch {
+        // Le jeton local ne vaudra plus rien de toute façon
+      }
+    }
+    persist(null);
     setAccess(null);
     setData(null);
     setError('');
-  }, []);
+  }, [access]);
 
   const value = useMemo(
-    () => ({ access, data, loading, error, login, refresh, clear }),
-    [access, data, loading, error, login, refresh, clear]
+    () => ({
+      access,
+      data,
+      loading,
+      error,
+      canRequestCollect: access?.mode === 'account',
+      loginAccount,
+      registerAccount,
+      loginTicket,
+      refresh,
+      clear
+    }),
+    [access, data, loading, error, loginAccount, registerAccount, loginTicket, refresh, clear]
   );
 
   return <ClientAccessContext.Provider value={value}>{children}</ClientAccessContext.Provider>;
