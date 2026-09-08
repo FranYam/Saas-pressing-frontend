@@ -16,7 +16,7 @@ import {
   CircleCheckBig
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
-import type { OrderChannel, OrderItem, PaymentType, PaymentMethod } from '@/types';
+import type { Client, OrderChannel, OrderItem, PaymentType, PaymentMethod } from '@/types';
 import { PhoneInput, TextField, SelectField } from '@/components/forms/FormFields';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { IconBadge } from '@/components/ui/IconBadge';
