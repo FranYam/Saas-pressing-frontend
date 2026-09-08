@@ -82,15 +82,15 @@ export default function LoginPage() {
     <div className="flex min-h-screen">
       {/* ── Panneau marque (gauche) ── */}
       <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-charcoal p-12 lg:flex">
-        {/* Photo d'arrière-plan : atelier de pressing */}
+        {/* Photo d'arrière-plan : atelier de pressing (recadrée au ratio du panneau) */}
         <img
           src="/images/hero-pressing-hd.jpg"
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 h-full w-full scale-105 object-cover opacity-60 blur-[2px]"
+          className="absolute inset-0 h-full w-full object-cover object-center"
         />
         {/* Voile dégradé garantissant la lisibilité du texte */}
-        <div className="absolute inset-0 bg-gradient-to-br from-charcoal/95 via-charcoal/80 to-charcoal/55" aria-hidden="true" />
+        <div className="absolute inset-0 bg-gradient-to-br from-charcoal/95 via-charcoal/80 to-charcoal/45" aria-hidden="true" />
         <div className="bg-grid-dark pointer-events-none absolute inset-0 opacity-60" aria-hidden="true" />
         <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary/20 blur-3xl" aria-hidden="true" />
         <div className="pointer-events-none absolute -bottom-32 -left-16 h-80 w-80 rounded-full bg-primary/10 blur-3xl" aria-hidden="true" />
