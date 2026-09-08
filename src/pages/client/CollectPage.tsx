@@ -18,6 +18,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { PortalLayout, PortalSection } from '@/components/layout/PortalLayout';
 import { CLIENT_NAV } from './ClientDashboardPage';
+import { useClientAccess } from '@/context/ClientAccessContext';
 import { TextField, SelectField, TextArea, PhoneInput } from '@/components/forms/FormFields';
 import { IconBadge } from '@/components/ui/IconBadge';
 import { Modal } from '@/components/ui/Modal';
@@ -42,6 +43,7 @@ const TIME_SLOTS = [
 
 export default function CollectPage() {
   const navigate = useNavigate();
+  const { data, clear } = useClientAccess();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('+226 ');
@@ -101,7 +103,16 @@ export default function CollectPage() {
   };
 
   return (
-    <PortalLayout title="Demande de collecte" nav={CLIENT_NAV}>
+    <PortalLayout
+      title="Demande de collecte"
+      nav={CLIENT_NAV}
+      identity={data ? { name: data.name, sub: data.phone } : { name: 'Espace client', sub: 'Sans inscription' }}
+      onExit={() => {
+        clear();
+        navigate('/client/access', { replace: true });
+      }}
+      exitLabel="Quitter l'espace"
+    >
       {/* Intro */}
       <div className="mb-5 flex items-start gap-4 rounded-2xl bg-charcoal p-5 text-white md:p-6">
         <IconBadge icon={WashingMachine} size="lg" className="shrink-0" />

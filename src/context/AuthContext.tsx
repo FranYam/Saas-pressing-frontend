@@ -22,7 +22,7 @@ const ROLE_HOME: Record<Role, string> = {
   gerant: '/dashboard',
   employe: '/dashboard',
   coursier: '/courier/dashboard',
-  client: '/client/dashboard',
+  client: '/client/access',
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {

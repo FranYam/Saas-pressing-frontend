@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Ticket, Loader2, LockKeyhole, Smartphone } from 'lucide-react';
+import { ArrowRight, Loader2, LockKeyhole, Smartphone } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';
 import { TextField, PhoneInput } from '@/components/forms/FormFields';
 import { useClientAccess } from '@/context/ClientAccessContext';

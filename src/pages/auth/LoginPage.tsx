@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, LogIn, Smartphone, TrendingUp, BellRing, ShieldCheck, Quote } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Smartphone, TrendingUp, BellRing, ShieldCheck, Quote, Ticket, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Logo } from '@/components/layout/Logo';
 import { TextField } from '@/components/forms/FormFields';
@@ -199,6 +199,22 @@ export default function LoginPage() {
               Inscrire mon pressing
             </Link>
           </p>
+
+          {/* Espace client */}
+          <Link
+            to="/client/access"
+            className="card card-hover mt-4 flex items-center gap-3 p-4 no-underline"
+            aria-label="Accéder à l'espace client"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-50">
+              <Ticket size={18} className="text-primary" aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-charcoal">Vous êtes client ?</span>
+              <span className="block text-xs text-slate-500">Suivez vos commandes avec votre n° de ticket — sans inscription.</span>
+            </span>
+            <ArrowRight size={16} className="shrink-0 text-slate-400" aria-hidden="true" />
+          </Link>
 
           {/* Comptes de démonstration */}
           <div className="card mt-8 p-4">

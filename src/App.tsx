@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { ClientAccessProvider, useClientAccess } from '@/context/ClientAccessContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -22,6 +23,7 @@ const SettingsPage = lazy(() => import('@/pages/app/SettingsPage'));
 const CollectPage = lazy(() => import('@/pages/client/CollectPage'));
 const TrackPage = lazy(() => import('@/pages/client/TrackPage'));
 const PayPage = lazy(() => import('@/pages/client/PayPage'));
+const ClientAccessPage = lazy(() => import('@/pages/client/ClientAccessPage'));
 const ClientDashboardPage = lazy(() => import('@/pages/client/ClientDashboardPage'));
 const ClientHistoryPage = lazy(() => import('@/pages/client/ClientHistoryPage'));
 const MissionsPage = lazy(() => import('@/pages/courier/MissionsPage'));
@@ -51,10 +53,21 @@ function BrandThemeSync() {
   return null;
 }
 
+/** Garde du portail client : redirige vers l'écran d'accès si aucune session ticket */
+function RequireClientAccess() {
+  const { access, loading } = useClientAccess();
+  if (loading && access) {
+    return <PageLoader />;
+  }
+  if (!access) return <Navigate to="/client/access" replace />;
+  return <Outlet />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <BrandThemeSync />
+      <ClientAccessProvider>
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
@@ -123,52 +136,20 @@ export default function App() {
               }
             />
 
-            {/* Portail Client (web + mobile) */}
-            <Route
-              element={
-                <ProtectedRoute roles={['client', 'gerant']}>
-                  <CollectPage />
-                </ProtectedRoute>
-              }
-              path="/client/collect"
-            />
-            <Route
-              path="/client/dashboard"
-              element={
-                <ProtectedRoute roles={['client', 'gerant']}>
-                  <ClientDashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/client/history"
-              element={
-                <ProtectedRoute roles={['client', 'gerant']}>
-                  <ClientHistoryPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/client/track/:id"
-              element={
-                <ProtectedRoute roles={['client', 'gerant']}>
-                  <TrackPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/client/pay/:id"
-              element={
-                <ProtectedRoute roles={['client', 'gerant']}>
-                  <PayPage />
-                </ProtectedRoute>
-              }
-            />
+            {/* Portail Client — accès public par ticket + téléphone */}
+            <Route path="/client/access" element={<ClientAccessPage />} />
+            <Route path="/client/collect" element={<CollectPage />} />
+            <Route element={<RequireClientAccess />}>
+              <Route path="/client/dashboard" element={<ClientDashboardPage />} />
+              <Route path="/client/history" element={<ClientHistoryPage />} />
+              <Route path="/client/track/:id" element={<TrackPage />} />
+              <Route path="/client/pay/:id" element={<PayPage />} />
+            </Route>
             {/* Anciens chemins client → redirection permanente */}
-            <Route path="/collect" element={<Navigate to="/client/dashboard" replace />} />
-            <Route path="/track/:id" element={<Navigate to="/client/dashboard" replace />} />
-            <Route path="/pay/:id" element={<Navigate to="/client/dashboard" replace />} />
-            <Route path="/portal" element={<Navigate to="/client/dashboard" replace />} />
+            <Route path="/collect" element={<Navigate to="/client/access" replace />} />
+            <Route path="/track/:id" element={<Navigate to="/client/access" replace />} />
+            <Route path="/pay/:id" element={<Navigate to="/client/access" replace />} />
+            <Route path="/portal" element={<Navigate to="/client/access" replace />} />
 
             {/* Portail Coursier (web + mobile) */}
             <Route
@@ -209,6 +190,7 @@ export default function App() {
           </Routes>
         </Suspense>
       </BrowserRouter>
+      </ClientAccessProvider>
     </AuthProvider>
   );
 }
