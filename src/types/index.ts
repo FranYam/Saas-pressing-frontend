@@ -132,6 +132,8 @@ export interface PressingSettings {
   address: string;
   openingHours: string;
   primaryColor: string;
+  /** Logo personnalisé du pressing (data URL) — active le mode « marque blanche » */
+  logoUrl?: string;
   smsNotifications: boolean;
   emailNotifications: boolean;
   orderReadySms: boolean;

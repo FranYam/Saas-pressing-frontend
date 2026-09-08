@@ -253,24 +253,6 @@ function mapApiEmployee(u: ApiUser): Employee {
   };
 }
 
-function mapApiCourier(c: ApiCourier): Mission {
-  // On mappe un coursier comme une "mission" virtuelle pour la compatibilité
-  return {
-    id: c.id,
-    orderId: '',
-    ticket: '',
-    type: 'livraison',
-    clientId: '',
-    sector: '',
-    address: '',
-    slot: '',
-    status: c.is_active ? 'a_faire' : 'terminee',
-    courierId: c.id,
-    itemsCount: 0,
-    createdAt: c.created_at,
-  };
-}
-
 function mapApiPayment(p: ApiPaiement): Payment {
   const methodMap: Record<string, PaymentMethod> = {
     ESPECES: 'especes',

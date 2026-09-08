@@ -7,13 +7,15 @@ import {
   CreditCard,
   Check,
   ImagePlus,
-  Save
+  Save,
+  Trash2
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import type { PriceItem, PressingSettings } from '@/types';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { TextField, TextArea, SelectField } from '@/components/forms/FormFields';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { applyPrimaryColor } from '@/lib/theme';
 import { formatFCFA } from '@/lib/format';
 
 type Section = 'infos' | 'personnalisation' | 'tarification' | 'notifications' | 'abonnement';
@@ -26,7 +28,14 @@ const SECTIONS: { value: Section; label: string; icon: typeof Building2; descrip
   { value: 'abonnement', label: 'Abonnement', icon: CreditCard, description: 'Plan et facturation' }
 ];
 
-const COLOR_SWATCHES = ['#C75B39', '#8D3B25', '#3B82F6', '#22C55E', '#7C3AED', '#1E293B'];
+const COLOR_SWATCHES = [
+  { value: '#C75B39', label: 'Terracotta' },
+  { value: '#38BDF8', label: 'Bleu ciel' },
+  { value: '#3B82F6', label: 'Bleu Faso' },
+  { value: '#22C55E', label: 'Vert Sahel' },
+  { value: '#7C3AED', label: 'Violet' },
+  { value: '#1E293B', label: 'Charbon' }
+];
 
 export default function SettingsPage() {
   const settings = useAppStore((s) => s.settings);
@@ -39,6 +48,7 @@ export default function SettingsPage() {
   const [priceDraft, setPriceDraft] = useState<PriceItem[]>(prices);
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [logoError, setLogoError] = useState('');
 
   useEffect(() => {
     if (settings && !draft) setDraft(settings);
@@ -125,57 +135,116 @@ export default function SettingsPage() {
           {section === 'personnalisation' && (
             <>
               <section className="card p-6" aria-label="Personnalisation">
-                <h2 className="card-title mb-5">Personnalisation</h2>
+                <h2 className="card-title mb-1">Personnalisation</h2>
+                <p className="page-subtitle mb-5">Votre logo et vos couleurs s'appliquent à toute l'application et aux tickets.</p>
 
+                {/* Logo */}
                 <div className="mb-6">
                   <span className="label-base">Logo du pressing</span>
                   <div className="flex flex-wrap items-center gap-4">
-                    <span className="flex h-16 w-16 items-center justify-center rounded-xl text-xl font-bold text-white" style={{ backgroundColor: draft.primaryColor }}>
-                      {draft.name.charAt(0).toUpperCase()}
+                    <span
+                      className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl text-xl font-bold text-white shadow-sm"
+                      style={{ backgroundColor: draft.primaryColor }}
+                    >
+                      {draft.logoUrl ? (
+                        <img src={draft.logoUrl} alt="Logo du pressing" className="h-full w-full object-cover" />
+                      ) : (
+                        draft.name.charAt(0).toUpperCase()
+                      )}
                     </span>
-                    <label className="btn-secondary cursor-pointer">
-                      <ImagePlus size={16} aria-hidden="true" />
-                      Changer le logo
-                      <input type="file" accept="image/png,image/jpeg" className="sr-only" />
-                    </label>
+                    <div className="flex flex-col gap-2">
+                      <label className="btn-secondary cursor-pointer">
+                        <ImagePlus size={16} aria-hidden="true" />
+                        {draft.logoUrl ? 'Changer le logo' : 'Téléverser un logo'}
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg"
+                          className="sr-only"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 1024 * 1024) {
+                              setLogoError('Fichier trop lourd (1 Mo maximum).');
+                              return;
+                            }
+                            setLogoError('');
+                            const reader = new FileReader();
+                            reader.onload = () => update({ logoUrl: String(reader.result) });
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                      </label>
+                      {draft.logoUrl && (
+                        <button type="button" onClick={() => update({ logoUrl: undefined })} className="btn-ghost !justify-start !px-3 text-xs !text-red-500 hover:!bg-red-50">
+                          <Trash2 size={13} aria-hidden="true" />
+                          Supprimer le logo
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <p className="mt-2 text-xs text-slate-400">PNG carré, 256×256 minimum. Le logo apparaît sur les tickets et l'application client.</p>
+                  {logoError && <p className="mt-2 text-xs font-medium text-red-500">{logoError}</p>}
+                  <p className="mt-2 text-xs text-slate-400">
+                    PNG ou JPG carré, 256×256 minimum (1 Mo max). Le logo remplace la marque PressNet dans toute l'application.
+                  </p>
                 </div>
 
+                {/* Couleur */}
                 <div>
                   <span className="label-base">Couleur principale</span>
                   <div className="flex flex-wrap gap-3">
-                    {COLOR_SWATCHES.map((color) => (
+                    {COLOR_SWATCHES.map((swatch) => (
                       <button
-                        key={color}
+                        key={swatch.value}
                         type="button"
-                        onClick={() => update({ primaryColor: color })}
+                        onClick={() => {
+                          update({ primaryColor: swatch.value });
+                          applyPrimaryColor(swatch.value); // application immédiate
+                        }}
+                        title={swatch.label}
                         className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-transform hover:scale-110 ${
-                          draft.primaryColor === color ? 'border-charcoal' : 'border-transparent'
+                          draft.primaryColor === swatch.value ? 'border-charcoal' : 'border-transparent'
                         }`}
-                        style={{ backgroundColor: color }}
-                        aria-label={`Couleur ${color}`}
-                        aria-pressed={draft.primaryColor === color}
+                        style={{ backgroundColor: swatch.value }}
+                        aria-label={`Couleur ${swatch.label}`}
+                        aria-pressed={draft.primaryColor === swatch.value}
                       >
-                        {draft.primaryColor === color && <Check size={16} className="text-white drop-shadow" />}
+                        {draft.primaryColor === swatch.value && <Check size={16} className="text-white drop-shadow" />}
                       </button>
                     ))}
                   </div>
+                  <p className="mt-3 text-xs text-slate-400">
+                    La couleur s'applique immédiatement. Cliquez sur « Enregistrer » pour la conserver après déconnexion.
+                  </p>
                 </div>
               </section>
 
               <section className="card p-6" aria-label="Aperçu">
                 <h2 className="card-title mb-4">Aperçu</h2>
                 <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-sand p-4">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-lg font-bold text-white" style={{ backgroundColor: draft.primaryColor }}>
-                    {draft.name.charAt(0).toUpperCase()}
+                  <span
+                    className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg font-bold text-white"
+                    style={{ backgroundColor: draft.primaryColor }}
+                  >
+                    {draft.logoUrl ? (
+                      <img src={draft.logoUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      draft.name.charAt(0).toUpperCase()
+                    )}
                   </span>
                   <div>
-                    <p className="text-sm font-semibold text-charcoal">{draft.name}</p>
+                    <p className="text-sm font-semibold text-charcoal">{draft.name || 'Nom du pressing'}</p>
                     <p className="text-xs text-slate-500">{draft.city} · Burkina Faso</p>
                   </div>
                   <span className="ml-auto rounded-full px-3 py-1 text-xs font-semibold text-white" style={{ backgroundColor: draft.primaryColor }}>
                     Ticket
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button type="button" className="btn-primary !py-2 text-xs" style={{ backgroundColor: draft.primaryColor }}>
+                    Bouton principal
+                  </button>
+                  <span className="inline-flex items-center rounded-full px-3 py-2 text-xs font-medium" style={{ backgroundColor: `${draft.primaryColor}1A`, color: draft.primaryColor }}>
+                    Badge
                   </span>
                 </div>
               </section>

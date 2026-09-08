@@ -8,6 +8,22 @@
 @tailwind utilities;
 
 @layer base {
+  /* Palette primaire par défaut (terracotta #C75B39) — surchargée à l'exécution
+     par lib/theme.ts quand le pressing personnalise sa couleur. */
+  :root {
+    --pn-primary: 199 91 57;
+    --pn-primary-50: 253 243 239;
+    --pn-primary-100: 250 229 220;
+    --pn-primary-200: 244 201 184;
+    --pn-primary-300: 235 166 137;
+    --pn-primary-400: 222 130 96;
+    --pn-primary-500: 199 91 57;
+    --pn-primary-600: 175 74 44;
+    --pn-primary-700: 141 59 37;
+    --pn-primary-800: 113 50 37;
+    --pn-primary-900: 92 43 33;
+  }
+
   html {
     -webkit-tap-highlight-color: transparent;
   }

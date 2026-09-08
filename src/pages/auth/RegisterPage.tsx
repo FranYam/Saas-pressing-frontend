@@ -93,10 +93,35 @@ export default function RegisterPage() {
       });
       navigate('/dashboard', { replace: true });
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: Record<string, string[]> } };
+      const axiosErr = err as { response?: { data?: any } };
       const apiErrors = axiosErr?.response?.data;
-      const firstError = apiErrors ? Object.values(apiErrors).flat()[0] : null;
-      setServerError(firstError ?? (err instanceof Error ? err.message : 'Une erreur est survenue. Réessayez.'));
+      
+      let errMsg = 'Une erreur est survenue. Réessayez.';
+      if (apiErrors) {
+        if (typeof apiErrors === 'string') {
+          errMsg = apiErrors;
+        } else if (typeof apiErrors === 'object') {
+          // Extract the first deep string value from nested error objects
+          const extractFirstString = (obj: any): string | null => {
+            for (const key in obj) {
+              const val = obj[key];
+              if (typeof val === 'string') return val;
+              if (Array.isArray(val) && typeof val[0] === 'string') return val[0];
+              if (typeof val === 'object' && val !== null) {
+                const nested = extractFirstString(val);
+                if (nested) return nested;
+              }
+            }
+            return null;
+          };
+          const firstString = extractFirstString(apiErrors);
+          if (firstString) errMsg = firstString;
+        }
+      } else if (err instanceof Error) {
+        errMsg = err.message;
+      }
+      
+      setServerError(errMsg);
     } finally {
       setSubmitting(false);
     }

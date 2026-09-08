@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Role, User } from '@/types';
 import * as api from '@/services/api';
+import { applyPrimaryColor } from '@/lib/theme';
 
 interface AuthContextValue {
   user: User | null;
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             const profile = await api.fetchPressingProfile();
             me.pressingName = profile.name;
+            if (profile.primary_color) applyPrimaryColor(profile.primary_color);
           } catch { /* non critique */ }
           setUser(me);
           localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(me));
@@ -78,7 +80,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (username: string, password: string) => {
-    const { user: u } = await api.login(username, password);
+    const { user: u, pressing } = await api.login(username, password);
+    // Applique immédiatement la couleur du pressing (avant même le hydrate du store)
+    if (pressing?.primaryColor) applyPrimaryColor(pressing.primaryColor);
     setUser(u);
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(u));
     return u;

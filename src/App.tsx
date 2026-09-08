@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { useBrandTheme } from '@/lib/theme';
 
 // Découpage du bundle pour une connexion lente (lazy loading des routes)
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
@@ -44,9 +45,16 @@ function RoleHome() {
   return <Navigate to={homeForRole(user.role)} replace />;
 }
 
+/** Applique la couleur personnalisée du pressing (variables CSS) à toute l'application */
+function BrandThemeSync() {
+  useBrandTheme();
+  return null;
+}
+
 export default function App() {
   return (
     <AuthProvider>
+      <BrandThemeSync />
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>

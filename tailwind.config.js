@@ -5,17 +5,17 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#C75B39',
-          50: '#FDF3EF',
-          100: '#FAE5DC',
-          200: '#F4C9B8',
-          300: '#EBA689',
-          400: '#DE8260',
-          500: '#C75B39',
-          600: '#AF4A2C',
-          700: '#8D3B25',
-          800: '#713225',
-          900: '#5C2B21'
+          DEFAULT: 'rgb(var(--pn-primary) / <alpha-value>)',
+          50: 'rgb(var(--pn-primary-50) / <alpha-value>)',
+          100: 'rgb(var(--pn-primary-100) / <alpha-value>)',
+          200: 'rgb(var(--pn-primary-200) / <alpha-value>)',
+          300: 'rgb(var(--pn-primary-300) / <alpha-value>)',
+          400: 'rgb(var(--pn-primary-400) / <alpha-value>)',
+          500: 'rgb(var(--pn-primary-500) / <alpha-value>)',
+          600: 'rgb(var(--pn-primary-600) / <alpha-value>)',
+          700: 'rgb(var(--pn-primary-700) / <alpha-value>)',
+          800: 'rgb(var(--pn-primary-800) / <alpha-value>)',
+          900: 'rgb(var(--pn-primary-900) / <alpha-value>)'
         },
         charcoal: {
           DEFAULT: '#1E293B',

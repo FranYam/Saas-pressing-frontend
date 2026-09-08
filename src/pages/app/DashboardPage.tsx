@@ -18,6 +18,7 @@ import { KPICard } from '@/components/ui/KPICard';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Avatar } from '@/components/ui/Avatar';
 import { IconBadge } from '@/components/ui/IconBadge';
+import { DEFAULT_PRIMARY } from '@/lib/theme';
 import { formatFCFA, formatDateShort, formatRelative } from '@/lib/format';
 
 const SHORT_DAYS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
@@ -26,6 +27,7 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const orders = useAppStore((s) => s.orders);
   const clients = useAppStore((s) => s.clients);
+  const primaryColor = useAppStore((s) => s.settings?.primaryColor) ?? DEFAULT_PRIMARY;
 
   const isGerant = user?.role === 'gerant';
 
@@ -115,12 +117,12 @@ export default function DashboardPage() {
                     width={36}
                   />
                   <Tooltip
-                    cursor={{ fill: 'rgba(199, 91, 57, 0.06)' }}
+                    cursor={{ fill: `${primaryColor}0F` }}
                     formatter={(value) => [formatFCFA(Number(value)), 'Encaissé']}
                     labelStyle={{ fontWeight: 600, color: '#1E293B' }}
                     contentStyle={{ borderRadius: 12, border: '1px solid #E2E8F0', fontSize: 13 }}
                   />
-                  <Bar dataKey="ca" fill="#C75B39" radius={[6, 6, 0, 0]} maxBarSize={44} />
+                  <Bar dataKey="ca" fill={primaryColor} radius={[6, 6, 0, 0]} maxBarSize={44} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
