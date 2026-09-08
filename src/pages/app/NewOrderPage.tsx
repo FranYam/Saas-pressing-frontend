@@ -16,7 +16,7 @@ import {
   CircleCheckBig
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
-import type { Client, OrderChannel, OrderItem, PaymentType, PaymentMethod } from '@/types';
+import type { OrderChannel, OrderItem, PaymentType, PaymentMethod } from '@/types';
 import { PhoneInput, TextField, SelectField } from '@/components/forms/FormFields';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { IconBadge } from '@/components/ui/IconBadge';
@@ -50,6 +50,7 @@ export default function NewOrderPage() {
   const clients = useAppStore((s) => s.clients);
   const prices = useAppStore((s) => s.prices);
   const createOrder = useAppStore((s) => s.createOrder);
+  const storeCreateClient = useAppStore((s) => s.createClient);
 
   // ── Client ──
   const [phone, setPhone] = useState('+226 ');
@@ -70,6 +71,7 @@ export default function NewOrderPage() {
   const [channel, setChannel] = useState<OrderChannel>('comptoir');
   const [deliveryRequested, setDeliveryRequested] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [creatingClient, setCreatingClient] = useState(false);
   const [successTicket, setSuccessTicket] = useState<string | null>(null);
 
   const total = rows.reduce((sum, r) => sum + r.quantity * r.unitPrice, 0);
@@ -97,26 +99,28 @@ export default function NewOrderPage() {
     updateRow(key, { type, unitPrice: price?.price ?? 500 });
   };
 
-  const createNewClient = () => {
+  const createNewClient = async () => {
     if (!newFirstName.trim() || !newLastName.trim()) {
       setFormError('Le prénom et le nom du client sont requis.');
       return;
     }
-    const client: Client = {
-      id: `c-${Date.now()}`,
-      firstName: newFirstName.trim(),
-      lastName: newLastName.trim(),
-      phone,
-      sector: 'À compléter',
-      address: '',
-      registeredAt: new Date().toISOString()
-    };
-    useAppStore.setState((s) => ({ clients: [client, ...s.clients] }));
-    setSelectedClient(client);
-    setNewClientModal(false);
-    setNewFirstName('');
-    setNewLastName('');
+    setCreatingClient(true);
     setFormError('');
+    try {
+      // Enregistre le client côté serveur puis le sélectionne pour la commande
+      const client = await storeCreateClient(`${newFirstName.trim()} ${newLastName.trim()}`, phone);
+      setSelectedClient(client);
+      setNewClientModal(false);
+      setNewFirstName('');
+      setNewLastName('');
+    } catch (err) {
+      const axiosErr = err as { response?: { data?: Record<string, string | string[]> } };
+      const details = axiosErr?.response?.data;
+      const first = details ? Object.values(details)[0] : undefined;
+      setFormError((Array.isArray(first) ? first[0] : first) ?? 'Impossible de créer le client. Réessayez.');
+    } finally {
+      setCreatingClient(false);
+    }
   };
 
   const submit = async () => {
@@ -487,9 +491,9 @@ export default function NewOrderPage() {
             <button type="button" className="btn-secondary" onClick={() => setNewClientModal(false)}>
               Annuler
             </button>
-            <button type="button" className="btn-primary" onClick={createNewClient}>
-              <UserRound size={16} aria-hidden="true" />
-              Créer le client
+            <button type="button" className="btn-primary" onClick={() => void createNewClient()} disabled={creatingClient}>
+              {creatingClient ? <LoadingSpinner size={16} /> : <UserRound size={16} aria-hidden="true" />}
+              {creatingClient ? 'Création…' : 'Créer le client'}
             </button>
           </>
         }

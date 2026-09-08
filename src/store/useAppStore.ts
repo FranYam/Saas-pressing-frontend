@@ -28,6 +28,10 @@ interface AppStore {
 
   // Équipe
   toggleEmployeeActive: (id: string) => Promise<void>;
+  /** Crée un compte employé ou coursier puis rafraîchit la liste */
+  createEmployee: (payload: Parameters<typeof api.createEmployee>[0]) => Promise<void>;
+  /** Modifie un membre de l'équipe puis rafraîchit la liste */
+  updateEmployee: (id: string, patch: Parameters<typeof api.updateEmployee>[1]) => Promise<void>;
 
   // Missions
   assignCourier: (missionId: string, courierId: string) => Promise<void>;
@@ -36,6 +40,10 @@ interface AppStore {
   // Paramètres
   saveSettings: (settings: PressingSettings) => Promise<void>;
   savePrices: (prices: PriceItem[]) => Promise<void>;
+
+  // Clients
+  /** Crée un client dans le pressing puis le rafraîchit dans la liste */
+  createClient: (name: string, phone: string) => Promise<Client>;
 
   // Notifications
   markNotificationRead: (id: string) => void;
@@ -103,6 +111,25 @@ export const useAppStore = create<AppStore>()(
         set((s) => ({ employees: s.employees.map((e) => (e.id === id ? updated : e)) }));
       },
 
+      createEmployee: async (payload) => {
+        await api.createEmployee(payload);
+        // La réponse de création est partielle — on rafraîchit la liste complète
+        try {
+          set({ employees: await api.fetchEmployees() });
+        } catch {
+          // La liste sera rechargée au prochain hydrate
+        }
+      },
+
+      updateEmployee: async (id, patch) => {
+        await api.updateEmployee(id, patch);
+        try {
+          set({ employees: await api.fetchEmployees() });
+        } catch {
+          // La liste sera rechargée au prochain hydrate
+        }
+      },
+
       assignCourier: async (missionId, courierId) => {
         const updated = await api.assignCourier(missionId, courierId);
         set((s) => ({ missions: s.missions.map((m) => (m.id === missionId ? updated : m)) }));
@@ -121,6 +148,12 @@ export const useAppStore = create<AppStore>()(
       savePrices: async (prices) => {
         await api.savePrices(prices);
         set({ prices });
+      },
+
+      createClient: async (name, phone) => {
+        const created = await api.createClient({ name, phone_number: phone });
+        set((s) => ({ clients: [created, ...s.clients] }));
+        return created;
       },
 
       markNotificationRead: (id) =>

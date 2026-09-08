@@ -1,6 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Eye } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Users, Eye, UserPlus, CheckCircle2 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import type { Client } from '@/types';
 import { DataTable, type Column } from '@/components/ui/DataTable';
@@ -8,14 +11,130 @@ import { SearchInput } from '@/components/ui/SearchInput';
 import { Avatar } from '@/components/ui/Avatar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { useState } from 'react';
+import { Modal } from '@/components/ui/Modal';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { TextField, PhoneInput } from '@/components/forms/FormFields';
 import { formatFCFA, formatDateShort } from '@/lib/format';
+
+// ─── Formulaire d'inscription d'un client ────────────────────────────────────
+
+const clientSchema = z.object({
+  fullName: z.string().min(3, 'Le nom complet est requis.'),
+  phone: z.string().min(8, 'Numéro de téléphone invalide.')
+});
+
+type ClientForm = z.infer<typeof clientSchema>;
+
+function ClientFormModal({ onClose }: { onClose: () => void }) {
+  const createClient = useAppStore((s) => s.createClient);
+  const [serverError, setServerError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [created, setCreated] = useState<Client | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors }
+  } = useForm<ClientForm>({
+    resolver: zodResolver(clientSchema),
+    defaultValues: { fullName: '', phone: '+226 ' }
+  });
+
+  const phone = watch('phone');
+
+  const onSubmit = handleSubmit(async (values) => {
+    setServerError('');
+    setSubmitting(true);
+    try {
+      const client = await createClient(values.fullName.trim(), values.phone);
+      setCreated(client);
+    } catch (err) {
+      const axiosErr = err as { response?: { data?: Record<string, string | string[]> } };
+      const details = axiosErr?.response?.data;
+      const first = details ? Object.values(details)[0] : undefined;
+      setServerError(
+        (Array.isArray(first) ? first[0] : first) ??
+          (err instanceof Error ? err.message : 'Impossible de créer le client. Réessayez.')
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  });
+
+  return (
+    <Modal
+      open={true}
+      onClose={onClose}
+      title={created ? 'Client enregistré' : 'Inscrire un nouveau client'}
+      size="sm"
+      footer={
+        created ? (
+          <button type="button" className="btn-primary w-full" onClick={onClose}>
+            Fermer
+          </button>
+        ) : (
+          <>
+            <button type="button" className="btn-secondary" onClick={onClose} disabled={submitting}>
+              Annuler
+            </button>
+            <button type="button" className="btn-primary" onClick={() => void onSubmit()} disabled={submitting}>
+              {submitting ? <LoadingSpinner size={16} /> : <UserPlus size={16} aria-hidden="true" />}
+              {submitting ? 'Enregistrement…' : 'Enregistrer le client'}
+            </button>
+          </>
+        )
+      }
+    >
+      {created ? (
+        <div className="py-2 text-center">
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-50">
+            <CheckCircle2 size={26} className="text-green-500" aria-hidden="true" />
+          </div>
+          <p className="text-sm font-semibold text-charcoal">
+            {created.firstName} {created.lastName} a été enregistré
+          </p>
+          <p className="mt-1 text-xs text-slate-500">Vous pouvez dès maintenant lui créer une commande au comptoir.</p>
+        </div>
+      ) : (
+        <form onSubmit={onSubmit} className="space-y-4" noValidate>
+          {serverError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600" role="alert">
+              {serverError}
+            </div>
+          )}
+          <TextField
+            label="Nom complet"
+            placeholder="Ex : Mariam Traoré"
+            required
+            error={errors.fullName?.message}
+            {...register('fullName')}
+          />
+          <PhoneInput
+            label="Téléphone"
+            value={phone}
+            onValueChange={(v) => setValue('phone', v, { shouldValidate: true })}
+            error={errors.phone?.message}
+            required
+          />
+          <p className="text-xs leading-relaxed text-slate-400">
+            Le numéro de téléphone permet de retrouver le client lors de la création d'une commande.
+          </p>
+        </form>
+      )}
+    </Modal>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ClientsPage() {
   const navigate = useNavigate();
   const clients = useAppStore((s) => s.clients);
   const orders = useAppStore((s) => s.orders);
   const [query, setQuery] = useState('');
+  const [formOpen, setFormOpen] = useState(false);
 
   const stats = useMemo(() => {
     const map = new Map<string, { orders: number; creance: number; lastVisit: string | null }>();
@@ -114,7 +233,18 @@ export default function ClientsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Gestion des clients" subtitle="Retrouvez l'historique et les créances de chaque client." />
+      <PageHeader
+        title="Gestion des clients"
+        subtitle="Retrouvez l'historique et les créances de chaque client."
+        actions={
+          <button type="button" className="btn-primary" onClick={() => setFormOpen(true)}>
+            <UserPlus size={17} aria-hidden="true" />
+            Nouveau client
+          </button>
+        }
+      />
+
+      {formOpen && <ClientFormModal onClose={() => setFormOpen(false)} />}
 
       <div className="card">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4">
@@ -161,7 +291,13 @@ export default function ClientsPage() {
             <EmptyState
               icon={Users}
               title="Aucun client trouvé"
-              message={query ? `Aucun résultat pour « ${query} ».` : 'Les clients apparaîtront ici dès la première commande.'}
+              message={query ? `Aucun résultat pour « ${query} ».` : 'Inscrivez votre premier client pour commencer.'}
+              action={
+                <button type="button" className="btn-primary" onClick={() => setFormOpen(true)}>
+                  <UserPlus size={16} aria-hidden="true" />
+                  Nouveau client
+                </button>
+              }
             />
           }
         />

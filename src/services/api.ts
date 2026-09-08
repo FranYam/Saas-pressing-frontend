@@ -554,9 +554,17 @@ export async function fetchEmployees(): Promise<Employee[]> {
   return data.results.map(mapApiEmployee);
 }
 
-/** POST /api/v1/accounts/employees/ */
-export async function createEmployee(payload: ApiEmployeeCreateRequest): Promise<Employee> {
+/** POST /api/v1/accounts/employees/ — crée un compte employé ou coursier du pressing */
+export async function createEmployee(
+  payload: ApiEmployeeCreateRequest & { role?: 'EMPLOYE' | 'COURSIER' }
+): Promise<Employee> {
   const { data } = await api.post<ApiUser>('/api/v1/accounts/employees/', payload);
+  return mapApiEmployee(data);
+}
+
+/** PATCH /api/v1/accounts/employees/{id}/ — modifie un membre (nom, mot de passe) */
+export async function updateEmployee(id: string, patch: ApiEmployeeUpdateRequest): Promise<Employee> {
+  const { data } = await api.patch<ApiUser>(`/api/v1/accounts/employees/${id}/`, patch);
   return mapApiEmployee(data);
 }
 
