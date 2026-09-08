@@ -82,7 +82,16 @@ export default function LoginPage() {
     <div className="flex min-h-screen">
       {/* ── Panneau marque (gauche) ── */}
       <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-charcoal p-12 lg:flex">
-        <div className="bg-grid-dark pointer-events-none absolute inset-0" aria-hidden="true" />
+        {/* Photo d'arrière-plan : atelier de pressing */}
+        <img
+          src="/images/hero-pressing-hd.jpg"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full scale-105 object-cover opacity-60 blur-[2px]"
+        />
+        {/* Voile dégradé garantissant la lisibilité du texte */}
+        <div className="absolute inset-0 bg-gradient-to-br from-charcoal/95 via-charcoal/80 to-charcoal/55" aria-hidden="true" />
+        <div className="bg-grid-dark pointer-events-none absolute inset-0 opacity-60" aria-hidden="true" />
         <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary/20 blur-3xl" aria-hidden="true" />
         <div className="pointer-events-none absolute -bottom-32 -left-16 h-80 w-80 rounded-full bg-primary/10 blur-3xl" aria-hidden="true" />
 
@@ -94,28 +103,28 @@ export default function LoginPage() {
           <h2 className="max-w-md text-3xl leading-tight font-bold text-white">
             La gestion de votre pressing, <span className="text-primary-300">simplifiée</span>.
           </h2>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-300">
+          <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-200">
             Commandes, clients, paiements et livraisons : tout est réuni dans une application pensée pour les pressings du Burkina Faso.
           </p>
 
           <ul className="mt-10 space-y-6">
             {FEATURES.map(({ icon: Icon, title, text }) => (
               <li key={title} className="flex items-start gap-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/10">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
                   <Icon size={18} className="text-primary-300" aria-hidden="true" />
                 </span>
                 <div>
                   <p className="text-sm font-semibold text-white">{title}</p>
-                  <p className="mt-0.5 text-xs leading-relaxed text-slate-400">{text}</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-slate-300">{text}</p>
                 </div>
               </li>
             ))}
           </ul>
         </div>
 
-        <figure className="relative rounded-xl border border-white/10 bg-white/5 p-5">
+        <figure className="relative rounded-xl border border-white/10 bg-charcoal/40 p-5 backdrop-blur-sm">
           <Quote size={18} className="text-primary-300" aria-hidden="true" />
-          <blockquote className="mt-2 text-sm leading-relaxed text-slate-300">
+          <blockquote className="mt-2 text-sm leading-relaxed text-slate-200">
             « Depuis PressNet, je connais mes créances du jour en un regard. Mes clientes reçoivent le SMS avant même que je rappelle. »
           </blockquote>
           <figcaption className="mt-3 text-xs font-medium text-slate-400">
