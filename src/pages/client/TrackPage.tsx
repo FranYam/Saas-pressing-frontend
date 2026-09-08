@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Check, Circle, Phone, Wallet, SearchX } from 'lucide-react';
 import { PortalLayout, PortalSection } from '@/components/layout/PortalLayout';
 import { CLIENT_NAV } from './ClientDashboardPage';
+import { useClientAccess } from '@/context/ClientAccessContext';
 import { useAppStore } from '@/store/useAppStore';
 import type { OrderStatus } from '@/types';
 import { formatFCFA, formatDateTime, ORDER_STATUS_LABELS, formatDate } from '@/lib/format';
@@ -18,12 +19,13 @@ const FLOW: OrderStatus[] = ['recu', 'traitement', 'pret', 'livre'];
 
 export default function TrackPage() {
   const { id = '' } = useParams();
-  const orders = useAppStore((s) => s.orders);
+  const navigate = useNavigate();
+  const { data, clear } = useClientAccess();
   const settings = useAppStore((s) => s.settings);
 
   const order = useMemo(
-    () => orders.find((o) => o.id === id || o.ticket.toLowerCase() === id.toLowerCase()),
-    [orders, id]
+    () => (data?.orders ?? []).find((o) => o.id === id || o.ticket.toLowerCase() === id.toLowerCase()),
+    [data?.orders, id]
   );
 
   if (!order) {
@@ -42,7 +44,16 @@ export default function TrackPage() {
   const balance = order.total - order.paidAmount;
 
   return (
-    <PortalLayout title={`Suivi ${order.ticket}`} nav={CLIENT_NAV}>
+    <PortalLayout
+      title={`Suivi ${order.ticket}`}
+      nav={CLIENT_NAV}
+      identity={data ? { name: data.name, sub: data.phone } : undefined}
+      onExit={() => {
+        clear();
+        navigate('/client/access', { replace: true });
+      }}
+      exitLabel="Quitter l'espace"
+    >
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
         {/* ── Colonne principale ── */}
         <div>

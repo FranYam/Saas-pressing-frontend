@@ -358,6 +358,45 @@ export function logout(): void {
   clearTokens();
 }
 
+// ─── Portail Client (accès public par ticket + téléphone) ───────────────────
+
+export interface ClientPortalData {
+  name: string;
+  phone: string;
+  orders: Order[];
+}
+
+/**
+ * GET /api/v1/portal/orders/?ticket=...&phone=...
+ * Endpoint public : valide le couple (n° de ticket, téléphone) et retourne
+ * la fiche client + toutes ses commandes. À ajouter côté Django (voir README).
+ */
+export async function fetchClientPortal(ticket: string, phone: string): Promise<ClientPortalData> {
+  const { data } = await api.get<{ name: string; phone: string; orders: ApiCommande[] }>(
+    '/api/v1/portal/orders/',
+    { params: { ticket, phone } }
+  );
+
+  const normalizePhone = (p: string) => p.replace(/\D/g, '');
+  const orders = data.orders.map((cmd) => {
+    const order = mapApiOrder(cmd);
+    const withPaid = cmd as ApiCommande & { amount_paid?: string };
+    order.paidAmount = parseFloat(withPaid.amount_paid ?? '0');
+
+    // Reconstitue un historique lisible : étapes passées datées à la création (approx.)
+    const flow: OrderStatus[] = ['recu', 'traitement', 'pret', 'livre'];
+    const idx = flow.indexOf(order.status);
+    order.statusHistory = flow.slice(0, idx + 1).map((status) => ({ status, date: cmd.created_at }));
+    return order;
+  });
+
+  return {
+    name: data.name,
+    phone: normalizePhone(data.phone) === normalizePhone(phone) ? data.phone : phone,
+    orders,
+  };
+}
+
 // ─── Profil utilisateur ───────────────────────────────────────────────────────
 
 /** GET /api/v1/accounts/me/ */

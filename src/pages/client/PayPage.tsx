@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Check, Smartphone, ShieldCheck, Loader2, BadgeCheck } from 'lucide-react';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { CLIENT_NAV } from './ClientDashboardPage';
-import { useAppStore } from '@/store/useAppStore';
+import { useClientAccess } from '@/context/ClientAccessContext';
 import type { PaymentMethod } from '@/types';
 import { PhoneInput } from '@/components/forms/FormFields';
 import { formatFCFA, isValidBurkinaPhone } from '@/lib/format';
@@ -27,10 +27,12 @@ export default function PayPage() {
   const { id = '' } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const orders = useAppStore((s) => s.orders);
-  const recordPayment = useAppStore((s) => s.recordPayment);
+  const { data, clear } = useClientAccess();
 
-  const order = useMemo(() => orders.find((o) => o.id === id || o.ticket.toLowerCase() === id.toLowerCase()), [orders, id]);
+  const order = useMemo(
+    () => (data?.orders ?? []).find((o) => o.id === id || o.ticket.toLowerCase() === id.toLowerCase()),
+    [data?.orders, id]
+  );
 
   const amount = order ? Math.max(0, order.total - order.paidAmount) : Number(searchParams.get('amount') ?? 0);
   const [operator, setOperator] = useState<PaymentMethod | null>(null);
@@ -43,16 +45,22 @@ export default function PayPage() {
     if (!operator) return setError('Choisissez votre opérateur mobile money.');
     if (!isValidBurkinaPhone(phone)) return setError('Numéro de téléphone burkinabè invalide.');
     setStage('processing');
-    // Simulation de la passerelle mobile money
+    // Passerelle mobile money : le push USSD réel sera branché avec le backend
     await new Promise((r) => setTimeout(r, 1800));
-    if (order) {
-      await recordPayment(order.id, operator, amount);
-    }
     setStage('done');
   };
 
   return (
-    <PortalLayout title="Paiement mobile money" nav={CLIENT_NAV}>
+    <PortalLayout
+      title="Paiement mobile money"
+      nav={CLIENT_NAV}
+      identity={data ? { name: data.name, sub: data.phone } : undefined}
+      onExit={() => {
+        clear();
+        navigate('/client/access', { replace: true });
+      }}
+      exitLabel="Quitter l'espace"
+    >
       <div className="mx-auto w-full max-w-md">
         {stage === 'done' ? (
           <div className="card mt-6 p-8 text-center">

@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { History, ChevronRight, Wallet } from 'lucide-react';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { CLIENT_NAV } from './ClientDashboardPage';
-import { useAuth } from '@/context/AuthContext';
-import { useAppStore } from '@/store/useAppStore';
+import { useClientAccess } from '@/context/ClientAccessContext';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { formatFCFA, formatDate, formatNumber } from '@/lib/format';
 
 type Tab = 'toutes' | 'en_cours' | 'terminees';
@@ -18,17 +18,13 @@ const TABS: { value: Tab; label: string }[] = [
 ];
 
 export default function ClientHistoryPage() {
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const orders = useAppStore((s) => s.orders);
-  const clients = useAppStore((s) => s.clients);
+  const { data, loading } = useClientAccess();
   const [tab, setTab] = useState<Tab>('toutes');
 
-  const clientId = user?.linkedClientId ?? clients[0]?.id;
-
   const myOrders = useMemo(
-    () => orders.filter((o) => o.clientId === clientId).sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    [orders, clientId]
+    () => [...(data?.orders ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    [data?.orders]
   );
 
   const filtered = myOrders.filter((o) =>
@@ -42,11 +38,28 @@ export default function ClientHistoryPage() {
     terminees: myOrders.filter((o) => o.status === 'livre').length
   };
 
+  if (loading && !data) {
+    return (
+      <PortalLayout title="Historique" nav={CLIENT_NAV} showBack={false}>
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <LoadingSpinner label="Chargement de l'historique…" />
+        </div>
+      </PortalLayout>
+    );
+  }
+
   return (
-    <PortalLayout title="Historique" nav={CLIENT_NAV} showBack={false}>
+    <PortalLayout
+      title="Historique"
+      nav={CLIENT_NAV}
+      showBack={false}
+      identity={data ? { name: data.name, sub: data.phone } : undefined}
+      onExit={() => navigate('/client/access')}
+      exitLabel="Quitter l'espace"
+    >
       <div className="mb-5">
         <h1 className="text-2xl font-semibold text-charcoal">Historique de mes commandes</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="page-subtitle">
           {formatNumber(myOrders.length)} commande{myOrders.length > 1 ? 's' : ''} · {formatFCFA(totalSpent)} au total
         </p>
       </div>
@@ -75,16 +88,7 @@ export default function ClientHistoryPage() {
 
       {filtered.length === 0 ? (
         <div className="card">
-          <EmptyState
-            icon={History}
-            title="Aucune commande"
-            message="Vos commandes passées apparaîtront ici."
-            action={
-              <Link to="/client/collect" className="btn-primary">
-                Demander une collecte
-              </Link>
-            }
-          />
+          <EmptyState icon={History} title="Aucune commande" message="Vos commandes passées apparaîtront ici." />
         </div>
       ) : (
         <>
@@ -105,13 +109,13 @@ export default function ClientHistoryPage() {
                   const balance = o.total - o.paidAmount;
                   return (
                     <tr key={o.id} className="cursor-pointer transition-colors hover:bg-primary-50/40" onClick={() => navigate(`/client/track/${o.id}`)}>
-                      <td className="px-4 py-3.5 font-semibold text-primary">{o.ticket}</td>
+                      <td className="px-4 py-3.5 font-semibold text-primary">{o.ticket || 'Commande'}</td>
                       <td className="px-4 py-3.5 text-slate-500">{formatDate(o.createdAt)}</td>
                       <td className="px-4 py-3.5 text-slate-500">{o.items.reduce((n, i) => n + i.quantity, 0)}</td>
-                      <td className="px-4 py-3.5 font-medium">{formatFCFA(o.total)}</td>
-                      <td className="px-4 py-3.5 text-green-600">{formatFCFA(o.paidAmount)}</td>
+                      <td className="px-4 py-3.5 font-medium tabular-nums">{formatFCFA(o.total)}</td>
+                      <td className="px-4 py-3.5 text-green-600 tabular-nums">{formatFCFA(o.paidAmount)}</td>
                       <td className="px-4 py-3.5">
-                        {balance > 0 ? <span className="font-semibold text-red-500">{formatFCFA(balance)}</span> : <span className="text-slate-400">—</span>}
+                        {balance > 0 ? <span className="font-semibold text-red-500 tabular-nums">{formatFCFA(balance)}</span> : <span className="text-slate-400">—</span>}
                       </td>
                       <td className="px-4 py-3.5">
                         <StatusBadge variant={o.status} />
@@ -139,7 +143,7 @@ export default function ClientHistoryPage() {
                     aria-label={`Commande ${o.ticket}`}
                   >
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-bold text-charcoal">{o.ticket}</p>
+                      <p className="text-sm font-bold text-charcoal">{o.ticket || 'Commande'}</p>
                       <StatusBadge variant={o.status} />
                     </div>
                     <p className="mt-1 text-xs text-slate-400">{formatDate(o.createdAt)}</p>

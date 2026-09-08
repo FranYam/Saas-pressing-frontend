@@ -19,6 +19,11 @@ interface PortalLayoutProps {
   children: ReactNode;
   /** Affiche le bouton retour mobile (défaut : true) */
   showBack?: boolean;
+  /** Identité affichée en mode public (ex. Espace client) ; sinon utilisateur connecté */
+  identity?: { name: string; sub: string };
+  /** Action de sortie en mode public ; sinon déconnexion classique */
+  onExit?: () => void;
+  exitLabel?: string;
 }
 
 /**
@@ -26,10 +31,14 @@ interface PortalLayoutProps {
  * - Mobile : flèche retour + titre + menu hamburger
  * - Desktop (≥ md) : barre de navigation avec logo, liens et utilisateur
  */
-export function PortalLayout({ title, nav, children, showBack = true }: PortalLayoutProps) {
+export function PortalLayout({ title, nav, children, showBack = true, identity, onExit, exitLabel = 'Déconnexion' }: PortalLayoutProps) {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout: authLogout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const displayName = identity?.name ?? user?.fullName ?? '';
+  const displaySub = identity?.sub ?? user?.email ?? '';
+  const handleExit = onExit ?? authLogout;
 
   const navLinks = (onClickItem?: () => void) => (
     <>
@@ -64,17 +73,17 @@ export function PortalLayout({ title, nav, children, showBack = true }: PortalLa
           </nav>
           <div className="ml-auto flex items-center gap-3">
             <div className="text-right leading-tight">
-              <p className="text-sm font-semibold text-charcoal">{user?.fullName}</p>
-              <p className="text-xs text-slate-500">{user?.email}</p>
+              <p className="text-sm font-semibold text-charcoal">{displayName}</p>
+              <p className="text-xs text-slate-500">{displaySub}</p>
             </div>
             <button
               type="button"
-              onClick={logout}
+              onClick={handleExit}
               className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500"
               aria-label="Se déconnecter"
             >
               <LogOut size={14} aria-hidden="true" />
-              Déconnexion
+              {exitLabel}
             </button>
           </div>
         </div>
@@ -112,8 +121,8 @@ export function PortalLayout({ title, nav, children, showBack = true }: PortalLa
           <div className="border-t border-slate-100 bg-white px-4 py-3 md:hidden">
             <div className="mx-auto max-w-lg space-y-1">
               <div className="border-b border-slate-100 px-2 pb-3">
-                <p className="text-sm font-semibold text-charcoal">{user?.fullName}</p>
-                <p className="text-xs text-slate-500">{user?.email}</p>
+                <p className="text-sm font-semibold text-charcoal">{displayName}</p>
+                <p className="text-xs text-slate-500">{displaySub}</p>
               </div>
               {navLinks(() => setMenuOpen(false))}
               <button
@@ -129,11 +138,11 @@ export function PortalLayout({ title, nav, children, showBack = true }: PortalLa
               </button>
               <button
                 type="button"
-                onClick={logout}
+                onClick={handleExit}
                 className="flex w-full items-center gap-2.5 rounded-lg px-3.5 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50"
               >
                 <LogOut size={17} aria-hidden="true" />
-                Se déconnecter
+                {exitLabel}
               </button>
             </div>
           </div>

@@ -10,147 +10,189 @@ import {
   ChevronRight,
   Phone,
   Clock3,
-  Sparkles
+  Sparkles,
+  RefreshCw
 } from 'lucide-react';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { PortalHero } from '@/components/layout/PortalHero';
-import { useAuth } from '@/context/AuthContext';
+import { useClientAccess } from '@/context/ClientAccessContext';
 import { useAppStore } from '@/store/useAppStore';
 import { StatCard } from '@/components/ui/StatCard';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import type { Order, OrderStatus } from '@/types';
 import { formatFCFA, formatDateShort, ORDER_STATUS_LABELS } from '@/lib/format';
 
 export const CLIENT_NAV = [
-  { to: '/client/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+  { to: '/client/dashboard', label: 'Mes commandes', icon: LayoutDashboard },
   { to: '/client/collect', label: 'Demande de collecte', icon: Send },
   { to: '/client/history', label: 'Historique', icon: History }
 ];
 
 const FLOW: OrderStatus[] = ['recu', 'traitement', 'pret', 'livre'];
 
+/** Bouton d'actualisation discret */
+function RefreshButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="btn-ghost !px-2" title="Rafraîchir" aria-label="Rafraîchir">
+      <RefreshCw size={15} aria-hidden="true" />
+    </button>
+  );
+}
+
 export default function ClientDashboardPage() {
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const orders = useAppStore((s) => s.orders);
-  const clients = useAppStore((s) => s.clients);
+  const { data, loading, error, refresh, clear } = useClientAccess();
   const settings = useAppStore((s) => s.settings);
 
-  const clientId = user?.linkedClientId ?? clients[0]?.id;
-
-  const myOrders = useMemo(
-    () => orders.filter((o) => o.clientId === clientId).sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    [orders, clientId]
+  const orders = useMemo(
+    () => [...(data?.orders ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    [data?.orders]
   );
 
-  const active = myOrders.filter((o) => o.status !== 'livre');
-  const done = myOrders.filter((o) => o.status === 'livre');
-  const balance = myOrders.reduce((sum, o) => sum + Math.max(0, o.total - o.paidAmount), 0);
-  const recent = myOrders.slice(0, 4);
+  const active = orders.filter((o) => o.status !== 'livre');
+  const done = orders.filter((o) => o.status === 'livre');
+  const balance = orders.reduce((sum, o) => sum + Math.max(0, o.total - o.paidAmount), 0);
+  const recent = orders.slice(0, 4);
+  const firstName = (data?.name ?? '').split(' ')[0] || 'cher client';
+
+  const exitClientSpace = () => {
+    clear();
+    navigate('/client/access', { replace: true });
+  };
 
   return (
-    <PortalLayout title="Tableau de bord" nav={CLIENT_NAV} showBack={false}>
-      {/* Bandeau d'accueil */}
-      <PortalHero
-        icon={Sparkles}
-        title={`Bonjour ${user?.fullName.split(' ')[0]}`}
-        subtitle={
-          active.length > 0
-            ? `Vous avez ${active.length} commande${active.length > 1 ? 's' : ''} en cours chez ${settings?.name ?? 'votre pressing'}.`
-            : `Aucune commande en cours. Envoyez votre linge, on s'occupe du reste.`
-        }
-        action={
-          <Link to="/client/collect" className="btn-primary shrink-0">
-            <Send size={16} aria-hidden="true" />
-            Demander une collecte
-          </Link>
-        }
-      />
+    <PortalLayout
+      title="Mes commandes"
+      nav={CLIENT_NAV}
+      showBack={false}
+      identity={data ? { name: data.name, sub: data.phone } : undefined}
+      onExit={exitClientSpace}
+      exitLabel="Quitter l'espace"
+    >
+      {loading && !data ? (
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <LoadingSpinner label="Chargement de vos commandes…" />
+        </div>
+      ) : error ? (
+        <div className="card p-8 text-center">
+          <EmptyState
+            icon={RefreshCw}
+            title="Impossible de charger vos commandes"
+            message={error}
+            action={
+              <button type="button" className="btn-primary" onClick={() => void refresh()}>
+                <RefreshCw size={16} aria-hidden="true" />
+                Réessayer
+              </button>
+            }
+          />
+        </div>
+      ) : (
+        <>
+          {/* Bandeau d'accueil */}
+          <PortalHero
+            icon={Sparkles}
+            title={`Bonjour ${firstName}`}
+            subtitle={
+              active.length > 0
+                ? `Vous avez ${active.length} commande${active.length > 1 ? 's' : ''} en cours${balance > 0 ? ` et un solde de ${formatFCFA(balance)} à régler.` : '.'}`
+                : 'Aucune commande en cours. Envoyez votre linge, on s\'occupe du reste.'
+            }
+            action={
+              <Link to="/client/collect" className="btn-primary shrink-0">
+                <Send size={16} aria-hidden="true" />
+                Demander une collecte
+              </Link>
+            }
+          />
 
-      {/* KPIs */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard icon={PackageOpen} label="Commandes en cours" value={String(active.length)} accent="orange" />
-        <StatCard icon={Wallet} label="Solde à payer" value={formatFCFA(balance)} accent="red" />
-        <StatCard icon={CheckCircle2} label="Commandes terminées" value={String(done.length)} accent="green" />
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
-        {/* Commandes en cours */}
-        <section aria-label="Commandes en cours">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="card-title">Commandes en cours</h2>
-            <Link to="/client/history" className="flex items-center text-xs font-semibold text-primary hover:underline">
-              Tout l'historique <ChevronRight size={14} aria-hidden="true" />
-            </Link>
+          {/* KPIs */}
+          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <StatCard icon={PackageOpen} label="Commandes en cours" value={String(active.length)} accent="orange" />
+            <StatCard icon={Wallet} label="Solde à payer" value={formatFCFA(balance)} accent={balance > 0 ? 'red' : 'green'} />
+            <StatCard icon={CheckCircle2} label="Commandes terminées" value={String(done.length)} accent="green" />
           </div>
 
-          {active.length === 0 ? (
-            <div className="card">
-              <EmptyState
-                icon={PackageOpen}
-                title="Aucune commande en cours"
-                message="Demandez une collecte, un coursier passe chez vous."
-                action={
-                  <Link to="/client/collect" className="btn-primary">
-                    <Send size={16} aria-hidden="true" />
-                    Demander une collecte
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
+            {/* Commandes en cours */}
+            <section aria-label="Commandes en cours">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="card-title">Commandes en cours</h2>
+                <div className="flex items-center gap-1">
+                  <RefreshButton onClick={() => void refresh()} />
+                  <Link to="/client/history" className="flex items-center text-xs font-semibold text-primary hover:underline">
+                    Tout l'historique <ChevronRight size={14} aria-hidden="true" />
                   </Link>
-                }
-              />
-            </div>
-          ) : (
-            <ul className="space-y-3">
-              {active.map((order) => (
-                <ActiveOrderCard key={order.id} order={order} />
-              ))}
-            </ul>
-          )}
-        </section>
+                </div>
+              </div>
 
-        {/* Colonne latérale */}
-        <div className="space-y-6">
-          <section className="card overflow-hidden" aria-label="Dernières commandes">
-            <div className="border-b border-slate-100 px-5 py-4">
-              <h2 className="card-title">Dernières commandes</h2>
-            </div>
-            <ul className="divide-y divide-slate-50">
-              {recent.map((o) => (
-                <li key={o.id}>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/client/track/${o.id}`)}
-                    className="flex w-full items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-primary-50/40"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-charcoal">{o.ticket}</p>
-                      <p className="text-xs text-slate-400">
-                        {formatDateShort(o.createdAt)} · {formatFCFA(o.total)}
-                      </p>
-                    </div>
-                    <StatusBadge variant={o.status} />
-                  </button>
-                </li>
-              ))}
-              {recent.length === 0 && <li className="px-5 py-6 text-center text-sm text-slate-400">Aucune commande</li>}
-            </ul>
-          </section>
+              {active.length === 0 ? (
+                <div className="card">
+                  <EmptyState
+                    icon={PackageOpen}
+                    title="Aucune commande en cours"
+                    message="Demandez une collecte, un coursier passe chez vous."
+                    action={
+                      <Link to="/client/collect" className="btn-primary">
+                        <Send size={16} aria-hidden="true" />
+                        Demander une collecte
+                      </Link>
+                    }
+                  />
+                </div>
+              ) : (
+                <ul className="space-y-3">
+                  {active.map((order) => (
+                    <ActiveOrderCard key={order.id} order={order} />
+                  ))}
+                </ul>
+              )}
+            </section>
 
-          <section className="card p-5" aria-label="Contact pressing">
-            <h2 className="card-title mb-3">Besoin d'aide ?</h2>
-            <p className="text-xs leading-relaxed text-slate-500">
-              {settings?.name} · {settings?.openingHours}
-            </p>
-            <a
-              href={`tel:${(settings?.phone ?? '+22625304455').replace(/\s/g, '')}`}
-              className="btn-secondary mt-4 w-full"
-            >
-              <Phone size={16} aria-hidden="true" />
-              Appeler le pressing
-            </a>
-          </section>
-        </div>
-      </div>
+            {/* Colonne latérale */}
+            <div className="space-y-6">
+              <section className="card overflow-hidden" aria-label="Dernières commandes">
+                <div className="border-b border-slate-100 px-5 py-4">
+                  <h2 className="card-title">Dernières commandes</h2>
+                </div>
+                <ul className="divide-y divide-slate-50">
+                  {recent.map((o) => (
+                    <li key={o.id}>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/client/track/${o.id}`)}
+                        className="flex w-full items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-primary-50/40"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-charcoal">{o.ticket || 'Commande'}</p>
+                          <p className="text-xs text-slate-400">
+                            {formatDateShort(o.createdAt)} · {formatFCFA(o.total)}
+                          </p>
+                        </div>
+                        <StatusBadge variant={o.status} />
+                      </button>
+                    </li>
+                  ))}
+                  {recent.length === 0 && <li className="px-5 py-6 text-center text-sm text-slate-400">Aucune commande</li>}
+                </ul>
+              </section>
+
+              <section className="card p-5" aria-label="Contact pressing">
+                <h2 className="card-title mb-3">Besoin d'aide ?</h2>
+                <p className="text-xs leading-relaxed text-slate-500">
+                  {settings?.name ?? 'Votre pressing'} · {settings?.openingHours ?? 'Lun – Sam : 07h30 – 19h00'}
+                </p>
+                <a href={`tel:${(settings?.phone ?? '+22625304455').replace(/\s/g, '')}`} className="btn-secondary mt-4 w-full">
+                  <Phone size={16} aria-hidden="true" />
+                  Appeler le pressing
+                </a>
+              </section>
+            </div>
+          </div>
+        </>
+      )}
     </PortalLayout>
   );
 }
@@ -164,7 +206,7 @@ function ActiveOrderCard({ order }: { order: Order }) {
     <li className="card p-5">
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex-1">
-          <p className="text-sm font-bold text-charcoal">{order.ticket}</p>
+          <p className="text-sm font-bold text-charcoal">{order.ticket || 'Commande'}</p>
           <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
             <Clock3 size={12} aria-hidden="true" />
             Reçu le {formatDateShort(order.createdAt)} · {order.items.reduce((n, i) => n + i.quantity, 0)} article(s)
