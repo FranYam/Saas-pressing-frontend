@@ -1,20 +1,19 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, Bell, CheckCheck, Download, Search, WifiOff } from 'lucide-react';
+import { Menu, Bell, CheckCheck, Download, Search, WifiOff, Package, CreditCard, Truck, Settings } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAppStore } from '@/store/useAppStore';
 import { Avatar } from '@/components/ui/Avatar';
 import { IconBadge } from '@/components/ui/IconBadge';
 import { ROLE_LABELS, formatRelative } from '@/lib/format';
-import { useOnlineStatus, usePWAInstall } from '@/lib/pwa';
+import { useOnlineStatus, usePwaInstall } from '@/lib/pwa';
 import { useClickOutside } from '@/lib/hooks';
-import { Bell as BellIcon, Package, CreditCard, Truck, Settings } from 'lucide-react';
 
 const NOTIF_META = {
   commande:  { icon: Package,     accent: 'blue'   as const },
   paiement:  { icon: CreditCard,  accent: 'green'  as const },
   livraison: { icon: Truck,       accent: 'orange' as const },
-  systeme:   { icon: Settings,    accent: 'gray'   as const },
+  systeme:   { icon: Settings,    accent: 'slate'  as const },
 };
 
 interface HeaderProps {
@@ -25,7 +24,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const online = useOnlineStatus();
-  const { canInstall, promptInstall } = usePWAInstall();
+  const { canInstall, promptInstall } = usePwaInstall();
 
   const notifications = useAppStore((s) => s.notifications);
   const markRead = useAppStore((s) => s.markNotificationRead);

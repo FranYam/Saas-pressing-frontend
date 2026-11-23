@@ -29,12 +29,12 @@ const SECTIONS: { value: Section; label: string; icon: typeof Building2; descrip
 ];
 
 const COLOR_SWATCHES = [
-  { value: '#C75B39', label: 'Terracotta' },
-  { value: '#38BDF8', label: 'Bleu ciel' },
-  { value: '#3B82F6', label: 'Bleu Faso' },
-  { value: '#22C55E', label: 'Vert Sahel' },
-  { value: '#7C3AED', label: 'Violet' },
-  { value: '#1E293B', label: 'Charbon' }
+  { value: '#142B4A', label: 'Bleu marine (PressNet)' },
+  { value: '#1E3A5F', label: 'Bleu nuit' },
+  { value: '#0D9488', label: 'Sarcelle' },
+  { value: '#2563EB', label: 'Bleu cobalt' },
+  { value: '#16A34A', label: 'Vert émeraude' },
+  { value: '#C75B39', label: 'Terracotta' }
 ];
 
 export default function SettingsPage() {

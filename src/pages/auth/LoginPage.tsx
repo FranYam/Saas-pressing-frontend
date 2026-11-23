@@ -82,10 +82,10 @@ export default function LoginPage() {
     <div className="flex min-h-screen">
       {/* ── Panneau marque (gauche) ── */}
       <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-charcoal p-12 lg:flex">
-        {/* Photo d'arrière-plan : atelier de pressing (recadrée au ratio du panneau) */}
+        {/* Photo d'arrière-plan : pressing professionnel (sans présence humaine) */}
         <img
-          src="/images/hero-pressing-hd.jpg"
-          alt=""
+          src="/images/machines-pressing.jpg"
+          alt="Pressing professionnel"
           aria-hidden="true"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />

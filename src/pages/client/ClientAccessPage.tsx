@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Loader2, LockKeyhole, Smartphone, UserPlus, LogIn, Ticket } from 'lucide-react';
-import { Logo } from '@/components/layout/Logo';
 import { TextField, PhoneInput, SelectField } from '@/components/forms/FormFields';
 import { useClientAccess } from '@/context/ClientAccessContext';
 import { fetchPortalPressings, type PortalPressing } from '@/services/api';
@@ -80,12 +79,28 @@ export default function ClientAccessPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-sand px-4 py-10">
+    <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-10">
       <div className="w-full max-w-md">
-        <div className="mb-8 flex flex-col items-center text-center">
-          <Logo variant="dark" size="lg" />
-          <h1 className="mt-6 text-2xl font-semibold text-charcoal">Espace client</h1>
-          <p className="page-subtitle">Suivez vos commandes, réglez votre solde, demandez une collecte.</p>
+        <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-card">
+          <div className="relative h-32 w-full overflow-hidden bg-navy">
+            <img
+              src="/images/vetements-plies.jpg"
+              alt="Linge propre et soigné"
+              className="h-full w-full object-cover opacity-60"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/40 to-transparent" />
+            <div className="absolute bottom-3 left-4 flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-white backdrop-blur-xs">
+                <Ticket size={16} />
+              </span>
+              <span className="text-base font-bold text-white">Espace Client PressNet</span>
+            </div>
+          </div>
+          <div className="p-4 text-center">
+            <p className="text-xs text-slate-500">
+              Suivi de commandes en temps réel, solde et demandes de collecte à domicile
+            </p>
+          </div>
         </div>
 
         <div className="card p-6 sm:p-8">

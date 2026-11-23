@@ -45,12 +45,12 @@ const STEPS = [
 ];
 
 const COLOR_SWATCHES = [
-  { value: '#C75B39', label: 'Terracotta' },
-  { value: '#8D3B25', label: 'Brique' },
-  { value: '#3B82F6', label: 'Bleu Faso' },
-  { value: '#22C55E', label: 'Vert Sahel' },
-  { value: '#7C3AED', label: 'Violet' },
-  { value: '#1E293B', label: 'Charbon' }
+  { value: '#142B4A', label: 'Bleu marine (PressNet)' },
+  { value: '#1E3A5F', label: 'Bleu nuit' },
+  { value: '#0D9488', label: 'Sarcelle' },
+  { value: '#2563EB', label: 'Bleu cobalt' },
+  { value: '#16A34A', label: 'Vert émeraude' },
+  { value: '#C75B39', label: 'Terracotta' }
 ];
 
 const CITIES = ['Ouagadougou', 'Bobo-Dioulasso', 'Koudougou', 'Banfora', 'Ouahigouya', 'Fada N\'Gourma'].map((c) => ({
@@ -68,7 +68,7 @@ export default function RegisterPage() {
 
   const form1 = useForm<Step1>({ resolver: zodResolver(step1Schema), defaultValues: { pressingName: '', city: 'Ouagadougou', phone: '+226 ', address: '' } });
   const form2 = useForm<Step2>({ resolver: zodResolver(step2Schema), defaultValues: { fullName: '', username: '', password: '', confirmPassword: '' } });
-  const form3 = useForm<Step3>({ resolver: zodResolver(step3Schema), defaultValues: { primaryColor: '#C75B39' } });
+  const form3 = useForm<Step3>({ resolver: zodResolver(step3Schema), defaultValues: { primaryColor: '#142B4A' } });
 
   const primaryColor = form3.watch('primaryColor');
 
