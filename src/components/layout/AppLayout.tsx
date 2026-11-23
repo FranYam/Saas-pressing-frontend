@@ -18,14 +18,14 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   }, [hydrate]);
 
   return (
-    <div className="min-h-screen bg-sand">
+    <div className="min-h-screen bg-surface">
       <Sidebar mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
-      <div className="flex min-h-screen flex-col md:pl-[76px] lg:pl-64">
+      <div className="flex min-h-screen flex-col md:pl-[72px] lg:pl-64">
         <Header onOpenMobileMenu={() => setMobileOpen(true)} />
         {!online && (
-          <div className="flex items-center justify-center gap-2 bg-orange-500 px-4 py-2 text-center text-xs font-medium text-white" role="status">
+          <div className="flex items-center justify-center gap-2 bg-amber-600 px-4 py-2 text-center text-xs font-medium text-white" role="status">
             <WifiOff size={14} aria-hidden="true" />
-            Vous êtes hors ligne — les données affichées peuvent être obsolètes.
+            Mode hors-ligne — les données affichées peuvent être obsolètes.
           </div>
         )}
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Client, Employee, Mission, Notification, Order, Payment, PriceItem, PressingSettings } from '@/types';
+import type { ApiDashboardSummary } from '@/types/apiTypes';
 import * as api from '@/services/api';
 
 interface AppStore {
@@ -13,11 +14,13 @@ interface AppStore {
   prices: PriceItem[];
   settings: PressingSettings | null;
   notifications: Notification[];
+  dashboardSummary: ApiDashboardSummary | null;
 
   // Chargement
   loading: boolean;
   initialized: boolean;
   hydrate: () => Promise<void>;
+  fetchDashboardSummary: () => Promise<void>;
 
   // Commandes
   updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
@@ -28,9 +31,7 @@ interface AppStore {
 
   // Équipe
   toggleEmployeeActive: (id: string) => Promise<void>;
-  /** Crée un compte employé ou coursier puis rafraîchit la liste */
   createEmployee: (payload: Parameters<typeof api.createEmployee>[0]) => Promise<void>;
-  /** Modifie un membre de l'équipe puis rafraîchit la liste */
   updateEmployee: (id: string, patch: Parameters<typeof api.updateEmployee>[1]) => Promise<void>;
 
   // Missions
@@ -42,7 +43,6 @@ interface AppStore {
   savePrices: (prices: PriceItem[]) => Promise<void>;
 
   // Clients
-  /** Crée un client dans le pressing puis le rafraîchit dans la liste */
   createClient: (name: string, phone: string) => Promise<Client>;
 
   // Notifications
@@ -61,15 +61,25 @@ export const useAppStore = create<AppStore>()(
       prices: [],
       settings: null,
       notifications: [],
+      dashboardSummary: null,
 
       loading: false,
       initialized: false,
+
+      fetchDashboardSummary: async () => {
+        try {
+          const summary = await api.fetchDashboard();
+          set({ dashboardSummary: summary });
+        } catch {
+          // Ignorer si non autorisé (employé / hors ligne)
+        }
+      },
 
       hydrate: async () => {
         if (get().loading || get().initialized) return;
         set({ loading: true });
         try {
-          const [orders, clients, payments, employees, missions, prices, settings, notifications] = await Promise.all([
+          const results = await Promise.allSettled([
             api.fetchOrders(),
             api.fetchClients(),
             api.fetchPayments(),
@@ -77,9 +87,24 @@ export const useAppStore = create<AppStore>()(
             api.fetchMissions(),
             api.fetchPrices(),
             api.fetchSettings(),
-            api.fetchNotifications()
+            api.fetchNotifications(),
+            api.fetchDashboard(),
           ]);
-          set({ orders, clients, payments, employees, missions, prices, settings, notifications, initialized: true });
+
+          const [ordersRes, clientsRes, paymentsRes, employeesRes, missionsRes, pricesRes, settingsRes, notifsRes, dashRes] = results;
+
+          set({
+            orders: ordersRes.status === 'fulfilled' ? ordersRes.value : get().orders,
+            clients: clientsRes.status === 'fulfilled' ? clientsRes.value : get().clients,
+            payments: paymentsRes.status === 'fulfilled' ? paymentsRes.value : get().payments,
+            employees: employeesRes.status === 'fulfilled' ? employeesRes.value : get().employees,
+            missions: missionsRes.status === 'fulfilled' ? missionsRes.value : get().missions,
+            prices: pricesRes.status === 'fulfilled' ? pricesRes.value : get().prices,
+            settings: settingsRes.status === 'fulfilled' ? settingsRes.value : get().settings,
+            notifications: notifsRes.status === 'fulfilled' ? notifsRes.value : get().notifications,
+            dashboardSummary: dashRes.status === 'fulfilled' ? dashRes.value : get().dashboardSummary,
+            initialized: true,
+          });
         } finally {
           set({ loading: false });
         }
@@ -102,7 +127,7 @@ export const useAppStore = create<AppStore>()(
           payments: [payment, ...s.payments],
           orders: s.orders.map((o) =>
             o.id === orderId ? { ...o, paidAmount: Math.min(o.paidAmount + amount, o.total), paymentMethod: method } : o
-          )
+          ),
         }));
       },
 
@@ -113,11 +138,10 @@ export const useAppStore = create<AppStore>()(
 
       createEmployee: async (payload) => {
         await api.createEmployee(payload);
-        // La réponse de création est partielle — on rafraîchit la liste complète
         try {
           set({ employees: await api.fetchEmployees() });
         } catch {
-          // La liste sera rechargée au prochain hydrate
+          // Ignorer
         }
       },
 
@@ -126,7 +150,7 @@ export const useAppStore = create<AppStore>()(
         try {
           set({ employees: await api.fetchEmployees() });
         } catch {
-          // La liste sera rechargée au prochain hydrate
+          // Ignorer
         }
       },
 
@@ -160,11 +184,10 @@ export const useAppStore = create<AppStore>()(
         set((s) => ({ notifications: s.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)) })),
 
       markAllNotificationsRead: () =>
-        set((s) => ({ notifications: s.notifications.map((n) => ({ ...n, read: true })) }))
+        set((s) => ({ notifications: s.notifications.map((n) => ({ ...n, read: true })) })),
     }),
     {
       name: 'pressnet-data',
-      // Mise en cache offline des données consultées (PWA)
       partialize: (state) => ({
         orders: state.orders,
         clients: state.clients,
@@ -174,8 +197,9 @@ export const useAppStore = create<AppStore>()(
         prices: state.prices,
         settings: state.settings,
         notifications: state.notifications,
-        initialized: state.initialized
-      })
+        dashboardSummary: state.dashboardSummary,
+        initialized: state.initialized,
+      }),
     }
   )
 );

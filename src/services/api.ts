@@ -131,7 +131,7 @@ api.interceptors.response.use(
 
       try {
         const { data } = await axios.post<ApiTokenRefreshResponse>(
-          `${BASE_URL}/api/v1/accounts/login/refresh/`,
+          `${BASE_URL}/api/accounts/login/refresh/`,
           { refresh }
         );
         setTokens(data.access, data.refresh ?? refresh);
@@ -222,6 +222,10 @@ function mapApiOrder(cmd: ApiCommande): Order {
     CREDIT: null,
   };
 
+  const total = parseFloat(cmd.total_price);
+  const rawPaid = (cmd as { amount_paid?: string | number }).amount_paid;
+  const paidAmount = rawPaid !== undefined ? parseFloat(String(rawPaid)) : (cmd.payment_status === 'PAYE' ? total : 0);
+
   return {
     id: cmd.id,
     ticket: cmd.ticket_number ?? '',
@@ -231,8 +235,8 @@ function mapApiOrder(cmd: ApiCommande): Order {
     channel: cmd.canal?.toLowerCase().replace('_', '_') === 'en_ligne' ? 'en_ligne' : 'comptoir',
     paymentType: paymentTypeMap[cmd.payment_status] ?? 'credit',
     paymentMethod: paymentMethodMap['ESPECES'] ?? null,
-    total: parseFloat(cmd.total_price),
-    paidAmount: 0, // Calculé côté serveur
+    total,
+    paidAmount,
     claimed: cmd.status === 'LIVRE',
     deliveryRequested: !!cmd.delivery_status,
     createdAt: cmd.created_at,
@@ -279,13 +283,13 @@ export interface LoginResponse {
 }
 
 /**
- * POST /api/v1/accounts/login/
+ * POST /api/accounts/login/
  * Retourne la paire JWT et le profil utilisateur.
  */
 export async function login(username: string, password: string): Promise<LoginResponse> {
   const payload: ApiLoginRequest = { username, password };
   const { data } = await api.post<{ access: string; refresh: string }>(
-    '/api/v1/accounts/login/',
+    '/api/accounts/login/',
     payload
   );
   setTokens(data.access, data.refresh);
@@ -296,7 +300,7 @@ export async function login(username: string, password: string): Promise<LoginRe
   const pressing_id: string | undefined = jwtPayload.pressing_id;
 
   // Récupérer le profil utilisateur
-  const meRes = await api.get<ApiUser>('/api/v1/accounts/me/');
+  const meRes = await api.get<ApiUser>('/api/accounts/me/');
   const user = mapApiUser({ ...meRes.data, role: role as ApiUser['role'] });
 
   // Récupérer le nom du pressing si disponible
@@ -304,7 +308,7 @@ export async function login(username: string, password: string): Promise<LoginRe
   let primaryColor: string | undefined;
   if (pressing_id) {
     try {
-      const profileRes = await api.get<ApiPressing>('/api/v1/tenants/profile/');
+      const profileRes = await api.get<ApiPressing>('/api/tenants/profile/');
       pressingName = profileRes.data.name;
       primaryColor = profileRes.data.primary_color;
     } catch {
@@ -318,7 +322,7 @@ export async function login(username: string, password: string): Promise<LoginRe
 }
 
 /**
- * POST /api/v1/tenants/register/
+ * POST /api/tenants/register/
  * Crée un pressing + son gérant en une requête atomique.
  */
 export async function register(payload: {
@@ -345,7 +349,7 @@ export async function register(payload: {
     },
   };
 
-  await api.post<ApiPressing>('/api/v1/tenants/register/', reqBody);
+  await api.post<ApiPressing>('/api/tenants/register/', reqBody);
 
   // Login automatique après inscription
   return login(payload.username, payload.password);
@@ -384,52 +388,52 @@ export interface PortalCatalogItem {
   price: string;
 }
 
-/** GET /api/v1/portal/pressings/ — liste publique (choix à l'inscription) */
+/** GET /api/portal/pressings/ — liste publique (choix à l'inscription) */
 export async function fetchPortalPressings(): Promise<PortalPressing[]> {
-  const { data } = await api.get<PortalPressing[]>('/api/v1/portal/pressings/');
+  const { data } = await api.get<PortalPressing[]>('/api/portal/pressings/');
   return data;
 }
 
-/** POST /api/v1/portal/register/ — crée un compte client (ou promeut la fiche comptoir) */
+/** POST /api/portal/register/ — crée un compte client (ou promeut la fiche comptoir) */
 export async function portalRegister(payload: {
   pressing: string;
   name: string;
   phone: string;
   password: string;
 }): Promise<ClientPortalSession> {
-  const { data } = await api.post<RawPortalPayload & { token: string }>('/api/v1/portal/register/', payload);
+  const { data } = await api.post<RawPortalPayload & { token: string }>('/api/portal/register/', payload);
   return { ...toPortalData(data), token: data.token };
 }
 
-/** POST /api/v1/portal/login/ — téléphone + mot de passe */
+/** POST /api/portal/login/ — téléphone + mot de passe */
 export async function portalLogin(phone: string, password: string): Promise<ClientPortalSession> {
-  const { data } = await api.post<RawPortalPayload & { token: string }>('/api/v1/portal/login/', { phone, password });
+  const { data } = await api.post<RawPortalPayload & { token: string }>('/api/portal/login/', { phone, password });
   return { ...toPortalData(data), token: data.token };
 }
 
-/** GET /api/v1/portal/me/ — session courante (en-tête X-Portal-Token) */
+/** GET /api/portal/me/ — session courante (en-tête X-Portal-Token) */
 export async function fetchPortalMe(token: string): Promise<ClientPortalData> {
-  const { data } = await api.get<RawPortalPayload>('/api/v1/portal/me/', {
+  const { data } = await api.get<RawPortalPayload>('/api/portal/me/', {
     headers: { 'X-Portal-Token': token }
   });
   return toPortalData(data);
 }
 
-/** DELETE /api/v1/portal/me/ — déconnexion (révoque le jeton) */
+/** DELETE /api/portal/me/ — déconnexion (révoque le jeton) */
 export async function portalLogout(token: string): Promise<void> {
-  await api.delete('/api/v1/portal/me/', { headers: { 'X-Portal-Token': token } });
+  await api.delete('/api/portal/me/', { headers: { 'X-Portal-Token': token } });
 }
 
-/** GET /api/v1/portal/catalog/ — tarifs actifs du pressing */
+/** GET /api/portal/catalog/ — tarifs actifs du pressing */
 export async function fetchPortalCatalog(token?: string, pressingId?: string): Promise<PortalCatalogItem[]> {
-  const { data } = await api.get<PortalCatalogItem[]>('/api/v1/portal/catalog/', {
+  const { data } = await api.get<PortalCatalogItem[]>('/api/portal/catalog/', {
     headers: token ? { 'X-Portal-Token': token } : undefined,
     params: token ? undefined : { pressing: pressingId }
   });
   return data;
 }
 
-/** POST /api/v1/portal/collectes/ — initie une collecte (vraie commande EN_LIGNE) */
+/** POST /api/portal/collectes/ — initie une collecte (vraie commande EN_LIGNE) */
 export async function createPortalCollecte(
   token: string,
   payload: {
@@ -439,7 +443,7 @@ export async function createPortalCollecte(
     articles: { clothing_type: string; quantity: number }[];
   }
 ): Promise<{ id: string; ticket_number: string; total_price: string }> {
-  const { data } = await api.post('/api/v1/portal/collectes/', payload, {
+  const { data } = await api.post('/api/portal/collectes/', payload, {
     headers: { 'X-Portal-Token': token }
   });
   return data;
@@ -465,12 +469,12 @@ function toPortalData(raw: RawPortalPayload): ClientPortalData {
 }
 
 /**
- * GET /api/v1/portal/orders/?ticket=...&phone=...
+ * GET /api/portal/orders/?ticket=...&phone=...
  * Endpoint public : valide le couple (n° de ticket, téléphone) et retourne
  * la fiche client + toutes ses commandes (accès rapide sans compte).
  */
 export async function fetchClientPortal(ticket: string, phone: string): Promise<ClientPortalData> {
-  const { data } = await api.get<RawPortalPayload>('/api/v1/portal/orders/', {
+  const { data } = await api.get<RawPortalPayload>('/api/portal/orders/', {
     params: { ticket, phone }
   });
   return toPortalData(data);
@@ -478,49 +482,49 @@ export async function fetchClientPortal(ticket: string, phone: string): Promise<
 
 // ─── Profil utilisateur ───────────────────────────────────────────────────────
 
-/** GET /api/v1/accounts/me/ */
+/** GET /api/accounts/me/ */
 export async function fetchMe(): Promise<User> {
-  const { data } = await api.get<ApiUser>('/api/v1/accounts/me/');
+  const { data } = await api.get<ApiUser>('/api/accounts/me/');
   return mapApiUser(data);
 }
 
 // ─── Pressing (Tenant) ───────────────────────────────────────────────────────
 
-/** GET /api/v1/tenants/profile/ */
+/** GET /api/tenants/profile/ */
 export async function fetchPressingProfile(): Promise<ApiPressing> {
-  const { data } = await api.get<ApiPressing>('/api/v1/tenants/profile/');
+  const { data } = await api.get<ApiPressing>('/api/tenants/profile/');
   return data;
 }
 
-/** PATCH /api/v1/tenants/profile/ */
+/** PATCH /api/tenants/profile/ */
 export async function updatePressingProfile(patch: Partial<ApiPressingRequest>): Promise<ApiPressing> {
-  const { data } = await api.patch<ApiPressing>('/api/v1/tenants/profile/', patch);
+  const { data } = await api.patch<ApiPressing>('/api/tenants/profile/', patch);
   return data;
 }
 
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 
-/** GET /api/v1/dashboard/summary/ */
+/** GET /api/dashboard/summary/ */
 export async function fetchDashboard(): Promise<ApiDashboardSummary> {
-  const { data } = await api.get<ApiDashboardSummary>('/api/v1/dashboard/summary/');
+  const { data } = await api.get<ApiDashboardSummary>('/api/dashboard/summary/');
   return data;
 }
 
 // ─── Commandes ───────────────────────────────────────────────────────────────
 
-/** GET /api/v1/orders/ — paginé (retourne toutes les pages) */
+/** GET /api/orders/ — paginé (retourne toutes les pages) */
 export async function fetchOrders(): Promise<Order[]> {
-  const { data } = await api.get<ApiPaginated<ApiCommande>>('/api/v1/orders/');
+  const { data } = await api.get<ApiPaginated<ApiCommande>>('/api/orders/');
   return data.results.map(mapApiOrder);
 }
 
-/** GET /api/v1/orders/{id}/ */
+/** GET /api/orders/{id}/ */
 export async function fetchOrderById(id: string): Promise<Order> {
-  const { data } = await api.get<ApiCommande>(`/api/v1/orders/${id}/`);
+  const { data } = await api.get<ApiCommande>(`/api/orders/${id}/`);
   return mapApiOrder(data);
 }
 
-/** POST /api/v1/orders/ */
+/** POST /api/orders/ */
 export async function createOrder(
   payload: Omit<Order, 'id' | 'ticket' | 'statusHistory' | 'createdAt' | 'dueDate' | 'claimed'>
 ): Promise<Order> {
@@ -539,29 +543,29 @@ export async function createOrder(
     articles,
   };
 
-  const { data } = await api.post<ApiCommande>('/api/v1/orders/', body);
+  const { data } = await api.post<ApiCommande>('/api/orders/', body);
   return mapApiOrder(data);
 }
 
-/** PATCH /api/v1/orders/{id}/update_status/ */
+/** PATCH /api/orders/{id}/update_status/ */
 export async function updateOrderStatus(orderId: string, status: OrderStatus): Promise<Order> {
-  const { data } = await api.patch<ApiCommande>(`/api/v1/orders/${orderId}/update_status/`, {
+  const { data } = await api.patch<ApiCommande>(`/api/orders/${orderId}/update_status/`, {
     status: mapFrontendStatusToApi(status),
   });
   return mapApiOrder(data);
 }
 
-/** PATCH /api/v1/orders/{id}/assign-courier/ */
+/** PATCH /api/orders/{id}/assign-courier/ */
 export async function assignCourierToOrder(orderId: string, courierId: string): Promise<Order> {
-  const { data } = await api.patch<ApiCommande>(`/api/v1/orders/${orderId}/assign-courier/`, {
+  const { data } = await api.patch<ApiCommande>(`/api/orders/${orderId}/assign-courier/`, {
     courier: courierId,
   });
   return mapApiOrder(data);
 }
 
-/** GET /api/v1/orders/my-deliveries/ — pour les coursiers */
+/** GET /api/orders/my-deliveries/ — pour les coursiers */
 export async function fetchMyDeliveries(): Promise<Order[]> {
-  const { data } = await api.get<ApiCommande | ApiPaginated<ApiCommande>>('/api/v1/orders/my-deliveries/');
+  const { data } = await api.get<ApiCommande | ApiPaginated<ApiCommande>>('/api/orders/my-deliveries/');
   if (Array.isArray((data as ApiPaginated<ApiCommande>).results)) {
     return (data as ApiPaginated<ApiCommande>).results.map(mapApiOrder);
   }
@@ -570,15 +574,15 @@ export async function fetchMyDeliveries(): Promise<Order[]> {
 
 // ─── Clients ─────────────────────────────────────────────────────────────────
 
-/** GET /api/v1/clients/ */
+/** GET /api/clients/ */
 export async function fetchClients(): Promise<Client[]> {
-  const { data } = await api.get<ApiPaginated<ApiClient>>('/api/v1/clients/');
+  const { data } = await api.get<ApiPaginated<ApiClient>>('/api/clients/');
   return data.results.map(mapApiClient);
 }
 
-/** GET /api/v1/clients/{id}/ */
+/** GET /api/clients/{id}/ */
 export async function fetchClientById(id: string): Promise<Client> {
-  const { data } = await api.get<ApiClient>(`/api/v1/clients/${id}/`);
+  const { data } = await api.get<ApiClient>(`/api/clients/${id}/`);
   return mapApiClient(data);
 }
 
@@ -590,33 +594,33 @@ export async function searchClientsByPhone(phone: string): Promise<Client[]> {
   return clients.filter((c) => c.phone.replace(/\s/g, '').toLowerCase().includes(q));
 }
 
-/** POST /api/v1/clients/ */
+/** POST /api/clients/ */
 export async function createClient(payload: { name: string; phone_number: string }): Promise<Client> {
   const body: ApiClientRequest = { name: payload.name, phone_number: payload.phone_number };
-  const { data } = await api.post<ApiClient>('/api/v1/clients/', body);
+  const { data } = await api.post<ApiClient>('/api/clients/', body);
   return mapApiClient(data);
 }
 
-/** PATCH /api/v1/clients/{id}/ */
+/** PATCH /api/clients/{id}/ */
 export async function updateClient(id: string, patch: Partial<ApiClientRequest>): Promise<Client> {
-  const { data } = await api.patch<ApiClient>(`/api/v1/clients/${id}/`, patch);
+  const { data } = await api.patch<ApiClient>(`/api/clients/${id}/`, patch);
   return mapApiClient(data);
 }
 
-/** DELETE /api/v1/clients/{id}/ */
+/** DELETE /api/clients/{id}/ */
 export async function deleteClient(id: string): Promise<void> {
-  await api.delete(`/api/v1/clients/${id}/`);
+  await api.delete(`/api/clients/${id}/`);
 }
 
 // ─── Paiements ───────────────────────────────────────────────────────────────
 
-/** GET /api/v1/payments/ */
+/** GET /api/payments/ */
 export async function fetchPayments(): Promise<Payment[]> {
-  const { data } = await api.get<ApiPaginated<ApiPaiement>>('/api/v1/payments/');
+  const { data } = await api.get<ApiPaginated<ApiPaiement>>('/api/payments/');
   return data.results.map(mapApiPayment);
 }
 
-/** POST /api/v1/payments/ */
+/** POST /api/payments/ */
 export async function recordPayment(
   orderId: string,
   method: Payment['method'],
@@ -635,13 +639,13 @@ export async function recordPayment(
     date_paiement: new Date().toISOString(),
   };
 
-  const { data } = await api.post<ApiPaiement>('/api/v1/payments/', body);
+  const { data } = await api.post<ApiPaiement>('/api/payments/', body);
   return mapApiPayment(data);
 }
 
-/** GET /api/v1/payments/debtors/ */
+/** GET /api/payments/debtors/ */
 export async function fetchDebtors(): Promise<Payment[]> {
-  const { data } = await api.get<ApiPaiement | ApiPaginated<ApiPaiement>>('/api/v1/payments/debtors/');
+  const { data } = await api.get<ApiPaiement | ApiPaginated<ApiPaiement>>('/api/payments/debtors/');
   if ((data as ApiPaginated<ApiPaiement>).results) {
     return (data as ApiPaginated<ApiPaiement>).results.map(mapApiPayment);
   }
@@ -650,67 +654,67 @@ export async function fetchDebtors(): Promise<Payment[]> {
 
 // ─── Mobile Money ─────────────────────────────────────────────────────────────
 
-/** POST /api/v1/payments-gateway/initiate/ */
+/** POST /api/payments-gateway/initiate/ */
 export async function initiateMobileMoney(
   payload: ApiInitiateMobileMoneyRequest
 ): Promise<ApiMobileMoneyRequest> {
-  const { data } = await api.post<ApiMobileMoneyRequest>('/api/v1/payments-gateway/initiate/', payload);
+  const { data } = await api.post<ApiMobileMoneyRequest>('/api/payments-gateway/initiate/', payload);
   return data;
 }
 
-/** GET /api/v1/payments-gateway/requests/ */
+/** GET /api/payments-gateway/requests/ */
 export async function fetchMobileMoneyRequests(): Promise<ApiMobileMoneyRequest[]> {
-  const { data } = await api.get<ApiPaginated<ApiMobileMoneyRequest>>('/api/v1/payments-gateway/requests/');
+  const { data } = await api.get<ApiPaginated<ApiMobileMoneyRequest>>('/api/payments-gateway/requests/');
   return data.results;
 }
 
 // ─── Équipe (Employés) ───────────────────────────────────────────────────────
 
-/** GET /api/v1/accounts/employees/ */
+/** GET /api/accounts/employees/ */
 export async function fetchEmployees(): Promise<Employee[]> {
-  const { data } = await api.get<ApiPaginated<ApiUser>>('/api/v1/accounts/employees/');
+  const { data } = await api.get<ApiPaginated<ApiUser>>('/api/accounts/employees/');
   return data.results.map(mapApiEmployee);
 }
 
-/** POST /api/v1/accounts/employees/ — crée un compte employé ou coursier du pressing */
+/** POST /api/accounts/employees/ — crée un compte employé ou coursier du pressing */
 export async function createEmployee(
   payload: ApiEmployeeCreateRequest & { role?: 'EMPLOYE' | 'COURSIER' }
 ): Promise<Employee> {
-  const { data } = await api.post<ApiUser>('/api/v1/accounts/employees/', payload);
+  const { data } = await api.post<ApiUser>('/api/accounts/employees/', payload);
   return mapApiEmployee(data);
 }
 
-/** PATCH /api/v1/accounts/employees/{id}/ — modifie un membre (nom, mot de passe) */
+/** PATCH /api/accounts/employees/{id}/ — modifie un membre (nom, mot de passe) */
 export async function updateEmployee(id: string, patch: ApiEmployeeUpdateRequest): Promise<Employee> {
-  const { data } = await api.patch<ApiUser>(`/api/v1/accounts/employees/${id}/`, patch);
+  const { data } = await api.patch<ApiUser>(`/api/accounts/employees/${id}/`, patch);
   return mapApiEmployee(data);
 }
 
-/** PATCH /api/v1/accounts/employees/{id}/ — toggle actif/inactif */
+/** PATCH /api/accounts/employees/{id}/ — toggle actif/inactif */
 export async function toggleEmployeeActive(employeeId: string): Promise<Employee> {
   // On récupère l'employé d'abord pour connaître son état actuel
-  const { data: current } = await api.get<ApiUser>(`/api/v1/accounts/employees/${employeeId}/`);
+  const { data: current } = await api.get<ApiUser>(`/api/accounts/employees/${employeeId}/`);
   const patch: ApiEmployeeUpdateRequest = { is_active: !current.is_active };
-  const { data } = await api.patch<ApiUser>(`/api/v1/accounts/employees/${employeeId}/`, patch);
+  const { data } = await api.patch<ApiUser>(`/api/accounts/employees/${employeeId}/`, patch);
   return mapApiEmployee(data);
 }
 
-/** DELETE /api/v1/accounts/employees/{id}/ (désactivation côté serveur) */
+/** DELETE /api/accounts/employees/{id}/ (désactivation côté serveur) */
 export async function deleteEmployee(employeeId: string): Promise<void> {
-  await api.delete(`/api/v1/accounts/employees/${employeeId}/`);
+  await api.delete(`/api/accounts/employees/${employeeId}/`);
 }
 
 // ─── Coursiers ───────────────────────────────────────────────────────────────
 
-/** GET /api/v1/deliveries/couriers/ */
+/** GET /api/deliveries/couriers/ */
 export async function fetchCouriers(): Promise<ApiCourier[]> {
-  const { data } = await api.get<ApiPaginated<ApiCourier>>('/api/v1/deliveries/couriers/');
+  const { data } = await api.get<ApiPaginated<ApiCourier>>('/api/deliveries/couriers/');
   return data.results;
 }
 
-/** DELETE /api/v1/deliveries/couriers/{id}/ (désactivation) */
+/** DELETE /api/deliveries/couriers/{id}/ (désactivation) */
 export async function deleteCourier(id: string): Promise<void> {
-  await api.delete(`/api/v1/deliveries/couriers/${id}/`);
+  await api.delete(`/api/deliveries/couriers/${id}/`);
 }
 
 // ─── Missions (simulées — non disponibles dans l'API) ────────────────────────
@@ -744,7 +748,7 @@ export async function fetchMissions(): Promise<Mission[]> {
   }
 }
 
-/** PATCH /api/v1/orders/{id}/assign-courier/ */
+/** PATCH /api/orders/{id}/assign-courier/ */
 export async function assignCourier(missionId: string, courierId: string): Promise<Mission> {
   const orderId = missionId.replace('mission-', '');
   const updated = await assignCourierToOrder(orderId, courierId);
@@ -764,7 +768,7 @@ export async function assignCourier(missionId: string, courierId: string): Promi
   };
 }
 
-/** PATCH /api/v1/orders/{id}/update-delivery/ */
+/** PATCH /api/orders/{id}/update-delivery/ */
 export async function updateMissionStatus(missionId: string, status: Mission['status']): Promise<Mission> {
   const orderId = missionId.replace('mission-', '');
   const deliveryStatusMap: Record<Mission['status'], string | null> = {
@@ -773,7 +777,7 @@ export async function updateMissionStatus(missionId: string, status: Mission['st
     terminee: 'LIVRE',
   };
 
-  const { data } = await api.patch<ApiCommande>(`/api/v1/orders/${orderId}/update-delivery/`, {
+  const { data } = await api.patch<ApiCommande>(`/api/orders/${orderId}/update-delivery/`, {
     delivery_status: deliveryStatusMap[status],
   });
 
@@ -831,11 +835,11 @@ export async function saveSettings(settings: PressingSettings): Promise<Pressing
 
 // ─── Tarification (non disponible dans l'API — mocks maintenus) ──────────────
 
-/** GET /api/v1/catalog/ — catalogue du pressing (staff JWT) */
+/** GET /api/catalog/ — catalogue du pressing (staff JWT) */
 export async function fetchPrices(): Promise<PriceItem[]> {
   try {
     const { data } = await api.get<ApiPaginated<{ id: string; name: string; category: string; price: string; is_active: boolean }>>(
-      '/api/v1/catalog/'
+      '/api/catalog/'
     );
     return data.results
       .filter((t) => t.is_active)
@@ -846,10 +850,10 @@ export async function fetchPrices(): Promise<PriceItem[]> {
   }
 }
 
-/** PUT /api/v1/catalog/bulk/ — remplace tout le catalogue (staff JWT) */
+/** PUT /api/catalog/bulk/ — remplace tout le catalogue (staff JWT) */
 export async function savePrices(prices: PriceItem[]): Promise<PriceItem[]> {
   await api.put(
-    '/api/v1/catalog/bulk/',
+    '/api/catalog/bulk/',
     {
       items: prices.map((p) => ({
         name: p.name,
