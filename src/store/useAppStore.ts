@@ -19,7 +19,7 @@ interface AppStore {
   // Chargement
   loading: boolean;
   initialized: boolean;
-  hydrate: () => Promise<void>;
+  hydrate: (force?: boolean) => Promise<void>;
   fetchDashboardSummary: () => Promise<void>;
 
   // Commandes

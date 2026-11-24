@@ -3,42 +3,23 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, LogIn, Smartphone, TrendingUp, BellRing, ShieldCheck, Quote, Ticket, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, LogIn, ShieldCheck, Ticket, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { Logo } from '@/components/layout/Logo';
 import { TextField } from '@/components/forms/FormFields';
-import { formatFCFA } from '@/lib/format';
 
 const loginSchema = z.object({
   username: z.string().min(1, `Veuillez saisir votre identifiant (téléphone ou nom d'utilisateur).`),
-  password: z.string().min(1, 'Veuillez saisir votre mot de passe.')
+  password: z.string().min(1, 'Veuillez saisir votre mot de passe.'),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
 
-const FEATURES = [
-  {
-    icon: Smartphone,
-    title: 'Paiements mobile money',
-    text: 'Orange Money et Moov Money intégrés pour encaisser sans stress.'
-  },
-  {
-    icon: TrendingUp,
-    title: 'Suivi en temps réel',
-    text: 'Chiffre d’affaires, créances et commandes visibles en un coup d’œil.'
-  },
-  {
-    icon: BellRing,
-    title: 'SMS automatiques',
-    text: 'Vos clients sont prévenus dès que leurs vêtements sont prêts.'
-  }
+const DEMO_ACCOUNTS = [
+  { label: 'Gérant', username: 'gerant', detail: 'Accès complet & finances' },
+  { label: 'Employé', username: 'employe', detail: 'Comptoir & clients' },
+  { label: 'Coursier', username: 'coursier', detail: 'Missions & livraisons' },
 ];
 
-const DEMO_ACCOUNTS = [
-  { label: 'Gérant', username: 'gerant', detail: 'Accès complet' },
-  { label: 'Employé', username: 'employe', detail: 'Comptoir & clients' },
-  { label: 'Coursier', username: 'coursier', detail: 'Missions & itinéraires' },
-];
 export default function LoginPage() {
   const { login, homeForRole } = useAuth();
   const navigate = useNavigate();
@@ -51,10 +32,10 @@ export default function LoginPage() {
     register,
     handleSubmit,
     setValue,
-    formState: { errors }
+    formState: { errors },
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { username: '', password: '' }
+    defaultValues: { username: '', password: '' },
   });
 
   const onSubmit = async (data: LoginForm) => {
@@ -66,8 +47,9 @@ export default function LoginPage() {
       navigate(from ?? homeForRole(loggedIn.role), { replace: true });
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { detail?: string } } };
-      const msg = axiosErr?.response?.data?.detail
-        ?? (err instanceof Error ? err.message : 'Identifiant ou mot de passe incorrect.');
+      const msg =
+        axiosErr?.response?.data?.detail ??
+        (err instanceof Error ? err.message : 'Identifiant ou mot de passe incorrect.');
       setServerError(msg);
     } finally {
       setSubmitting(false);
@@ -76,74 +58,46 @@ export default function LoginPage() {
 
   const fillDemo = (username: string) => {
     setValue('username', username);
+    setValue('password', 'password123');
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* ── Panneau marque (gauche) ── */}
-      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-charcoal p-12 lg:flex">
-        {/* Photo d'arrière-plan : pressing professionnel (sans présence humaine) */}
-        <img
-          src="/images/machines-pressing.jpg"
-          alt="Pressing professionnel"
-          aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover object-center"
-        />
-        {/* Voile dégradé garantissant la lisibilité du texte */}
-        <div className="absolute inset-0 bg-gradient-to-br from-charcoal/95 via-charcoal/80 to-charcoal/45" aria-hidden="true" />
-        <div className="bg-grid-dark pointer-events-none absolute inset-0 opacity-60" aria-hidden="true" />
-        <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary/20 blur-3xl" aria-hidden="true" />
-        <div className="pointer-events-none absolute -bottom-32 -left-16 h-80 w-80 rounded-full bg-primary/10 blur-3xl" aria-hidden="true" />
-
-        <Link to="/" className="relative w-fit" aria-label="PressNet — retour à l'accueil">
-          <Logo />
+    <div className="flex min-h-screen flex-col justify-center bg-surface px-4 py-12 sm:px-6 lg:px-8">
+      {/* Lien retour accueil */}
+      <div className="mx-auto w-full max-w-md mb-4">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-navy transition-colors"
+        >
+          <ArrowLeft size={14} />
+          Retour à l'accueil
         </Link>
-
-        <div className="relative">
-          <h2 className="max-w-md text-3xl leading-tight font-bold text-white">
-            La gestion de votre pressing, <span className="text-primary-300">simplifiée</span>.
-          </h2>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-200">
-            Commandes, clients, paiements et livraisons : tout est réuni dans une application pensée pour les pressings du Burkina Faso.
-          </p>
-
-          <ul className="mt-10 space-y-6">
-            {FEATURES.map(({ icon: Icon, title, text }) => (
-              <li key={title} className="flex items-start gap-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
-                  <Icon size={18} className="text-primary-300" aria-hidden="true" />
-                </span>
-                <div>
-                  <p className="text-sm font-semibold text-white">{title}</p>
-                  <p className="mt-0.5 text-xs leading-relaxed text-slate-300">{text}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <figure className="relative rounded-xl border border-white/10 bg-charcoal/40 p-5 backdrop-blur-sm">
-          <Quote size={18} className="text-primary-300" aria-hidden="true" />
-          <blockquote className="mt-2 text-sm leading-relaxed text-slate-200">
-            « Depuis PressNet, je connais mes créances du jour en un regard. Mes clientes reçoivent le SMS avant même que je rappelle. »
-          </blockquote>
-          <figcaption className="mt-3 text-xs font-medium text-slate-400">
-            Aminata Compaoré — Gérante, Pressing Wend Panga (Secteur 15)
-          </figcaption>
-        </figure>
       </div>
 
-      {/* ── Formulaire (droite) ── */}
-      <div className="flex w-full items-center justify-center bg-sand px-4 py-10 lg:w-1/2">
-        <div className="w-full max-w-md">
-          <div className="mb-8 lg:hidden">
-            <Logo variant="dark" />
-          </div>
+      <div className="mx-auto w-full max-w-md">
+        {/* En-tête de marque */}
+        <div className="text-center mb-8">
+          <Link to="/" className="inline-flex items-center gap-3" aria-label="PressNet">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-navy text-white shadow-md shadow-navy/20">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M3 6h18M3 12h18M3 18h12" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
+              </svg>
+            </span>
+            <span className="text-2xl font-bold tracking-tight text-navy">
+              Press<span className="text-slate-500 font-medium">Net</span>
+            </span>
+          </Link>
+          <h1 className="mt-6 text-2xl font-bold tracking-tight text-navy">
+            Connexion à votre pressing
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Espace gérant, employé de comptoir et coursier.
+          </p>
+        </div>
 
-          <h1 className="text-2xl font-semibold text-charcoal">Connexion</h1>
-          <p className="page-subtitle">Heureux de vous revoir ! Connectez-vous à votre espace pressing.</p>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5" noValidate>
+        {/* Carte de connexion */}
+        <div className="card p-6 sm:p-8">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
             {serverError && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600" role="alert">
                 {serverError}
@@ -151,7 +105,7 @@ export default function LoginPage() {
             )}
 
             <TextField
-              label="Identifiant (téléphone ou nom d'utilisateur)"
+              label="Identifiant (Téléphone ou pseudo)"
               type="text"
               placeholder="Ex : 70123456 ou admin"
               autoComplete="username"
@@ -174,71 +128,65 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute top-[34px] right-3 rounded p-1 text-slate-400 hover:text-charcoal"
+                  className="absolute top-[32px] right-3 rounded p-1 text-slate-400 hover:text-navy"
                   aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              <div className="mt-2 text-right">
-                <a href="#" className="text-xs font-medium text-primary hover:underline" onClick={(e) => e.preventDefault()}>
-                  Mot de passe oublié ?
-                </a>
-              </div>
             </div>
 
-            <button type="submit" className="btn-primary w-full !py-3" disabled={submitting}>
+            <button type="submit" className="btn-primary w-full !py-3 font-bold" disabled={submitting}>
               <LogIn size={17} aria-hidden="true" />
-              {submitting ? 'Connexion en cours…' : 'Se connecter'}
+              {submitting ? 'Connexion en cours…' : 'Accéder à mon espace'}
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-slate-500">
-            Pas encore de compte ?{' '}
-            <Link to="/register" className="font-semibold text-primary hover:underline">
-              Inscrire mon pressing
-            </Link>
-          </p>
-
-          {/* Espace client */}
-          <Link
-            to="/client/access"
-            className="card card-hover mt-4 flex items-center gap-3 p-4 no-underline"
-            aria-label="Accéder à l'espace client"
-          >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-50">
-              <Ticket size={18} className="text-primary" aria-hidden="true" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold text-charcoal">Vous êtes client ?</span>
-              <span className="block text-xs text-slate-500">Suivez vos commandes avec votre n° de ticket — sans inscription.</span>
-            </span>
-            <ArrowRight size={16} className="shrink-0 text-slate-400" aria-hidden="true" />
-          </Link>
-
-          {/* Comptes de démonstration */}
-          <div className="card mt-8 p-4">
+          {/* Raccourcis comptes de test */}
+          <div className="mt-8 border-t border-slate-100 pt-6">
             <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
-              <ShieldCheck size={14} className="text-primary" aria-hidden="true" />
-              Comptes de test — cliquez pour remplir l'identifiant
+              <ShieldCheck size={14} className="text-navy" aria-hidden="true" />
+              Comptes de test rapide
             </p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="mt-2.5 grid grid-cols-3 gap-2">
               {DEMO_ACCOUNTS.map((d) => (
                 <button
                   key={d.username}
                   type="button"
                   onClick={() => fillDemo(d.username)}
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-left text-xs transition-colors hover:border-primary hover:bg-primary-50"
+                  className="rounded-lg border border-slate-200/80 bg-slate-50/60 p-2 text-left text-xs transition-colors hover:border-navy hover:bg-white"
                 >
-                  <span className="block font-semibold text-charcoal">{d.label}</span>
-                  <span className="block truncate text-slate-500">{d.detail}</span>
+                  <span className="block font-bold text-navy">{d.label}</span>
+                  <span className="block truncate text-[10px] text-slate-400">{d.username}</span>
                 </button>
               ))}
             </div>
           </div>
+        </div>
 
-          <p className="mt-6 text-center text-xs text-slate-400">
-            Abonnement Pro — {formatFCFA(15000)} / mois · Sans engagement
+        {/* Liens secondaires : Espace client & Inscription */}
+        <div className="mt-6 space-y-3">
+          <Link
+            to="/client/access"
+            className="card flex items-center justify-between p-4 transition-colors hover:border-primary-300 hover:bg-white"
+          >
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-navy text-white">
+                <Ticket size={17} />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-navy">Vous êtes client ?</p>
+                <p className="text-xs text-slate-500">Suivez l'état de votre linge avec votre n° de ticket</p>
+              </div>
+            </div>
+            <ArrowRight size={15} className="text-slate-400" />
+          </Link>
+
+          <p className="text-center text-sm text-slate-500">
+            Nouveau pressing ?{' '}
+            <Link to="/register" className="font-bold text-navy hover:underline">
+              Inscrire mon établissement
+            </Link>
           </p>
         </div>
       </div>

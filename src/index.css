@@ -13,7 +13,6 @@
    * Surchargée à l'exécution par lib/theme.ts si le pressing personnalise sa couleur.
    */
   :root {
-    /* Bleu marine principal #142B4A → RGB 20 43 74 */
     --pn-primary:     20 43 74;
     --pn-primary-50:  237 242 249;
     --pn-primary-100: 214 225 240;
@@ -26,11 +25,9 @@
     --pn-primary-800: 9 19 31;
     --pn-primary-900: 6 13 22;
 
-    /* Alias sémantiques */
-    --pn-navy:        20 43 74;   /* #142B4A */
-    --pn-navy-deep:   16 34 56;   /* #102238 */
-    --pn-blue-gray:   107 130 156; /* #6B829C */
-    --pn-blue-light:  217 229 240; /* #D9E5F0 */
+    --pn-navy:        #142B4A;
+    --pn-navy-deep:   #102238;
+    --pn-surface:     #F5F7FA;
   }
 
   html {
@@ -39,14 +36,27 @@
   }
 
   body {
-    @apply bg-surface text-navy font-sans antialiased;
+    background: linear-gradient(180deg, #E6EFF8 0%, #EFF4F9 260px, #F5F7FA 100%);
+    background-attachment: fixed;
+    color: #142B4A;
+    @apply font-sans antialiased;
     font-size: 14px;
     line-height: 1.6;
+    min-height: 100vh;
   }
 
-  h1 { @apply text-2xl font-semibold tracking-tight text-navy; }
-  h2 { @apply text-xl font-semibold tracking-tight text-navy; }
-  h3 { @apply text-base font-semibold text-navy; }
+  h1 {
+    @apply text-2xl font-semibold tracking-tight;
+    color: #142B4A;
+  }
+  h2 {
+    @apply text-xl font-semibold tracking-tight;
+    color: #142B4A;
+  }
+  h3 {
+    @apply text-base font-semibold;
+    color: #142B4A;
+  }
 
   ::selection {
     background: rgb(var(--pn-primary-200) / 0.5);
@@ -62,6 +72,25 @@
   .tabular-nums { font-variant-numeric: tabular-nums; }
 }
 
+@layer utilities {
+  .bg-surface {
+    background: linear-gradient(180deg, #E6EFF8 0%, #EFF4F9 260px, #F5F7FA 100%);
+    background-attachment: fixed;
+  }
+  .bg-navy {
+    background-color: #142B4A;
+  }
+  .bg-navy-deep {
+    background-color: #102238;
+  }
+  .text-navy {
+    color: #142B4A;
+  }
+  .text-navy-deep {
+    color: #102238;
+  }
+}
+
 @layer components {
   /* ── Cartes ─────────────────────────────────────────────────────── */
   .card {
@@ -71,7 +100,8 @@
     @apply transition-shadow duration-200 hover:shadow-card-hover;
   }
   .card-title {
-    @apply text-base font-semibold text-navy;
+    @apply text-base font-semibold;
+    color: #142B4A;
   }
 
   /* ── Boutons ─────────────────────────────────────────────────────── */
@@ -87,11 +117,12 @@
 
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 rounded-lg
-           border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-navy
+           border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold
            shadow-sm transition-all duration-150
            hover:border-primary-200 hover:bg-primary-50 hover:text-primary
            active:scale-[0.98]
            disabled:cursor-not-allowed disabled:opacity-50;
+    color: #142B4A;
   }
 
   .btn-ghost {
@@ -110,10 +141,11 @@
   /* ── Formulaires ──────────────────────────────────────────────────── */
   .input-base {
     @apply w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5
-           text-sm text-navy transition-colors
+           text-sm transition-colors
            placeholder:text-slate-400
            focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-100
            disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400;
+    color: #142B4A;
   }
 
   .label-base {
@@ -144,7 +176,8 @@
     @apply px-4 py-3 text-left text-[11px] font-semibold tracking-wide text-slate-500 uppercase;
   }
   .table-td {
-    @apply px-4 py-3.5 text-sm text-navy;
+    @apply px-4 py-3.5 text-sm;
+    color: #142B4A;
   }
   .table-row-hover {
     @apply cursor-pointer transition-colors hover:bg-primary-50/50;
@@ -185,16 +218,6 @@
   @apply rounded-full bg-slate-200;
 }
 .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-
-/* ── Sidebar active link ─────────────────────────────────────────── */
-.nav-link {
-  @apply relative flex items-center gap-3 rounded-lg px-3 py-2.5
-         text-sm font-medium text-slate-300 transition-colors
-         hover:bg-white/10 hover:text-white;
-}
-.nav-link.active {
-  @apply bg-white/15 text-white;
-}
 
 /* ── Utility responsive table ────────────────────────────────────── */
 @media (max-width: 639px) {

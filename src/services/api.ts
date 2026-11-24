@@ -46,16 +46,10 @@ import type {
   ApiTokenRefreshResponse,
   ApiUser,
 } from '@/types/apiTypes';
-import {
-  MOCK_MISSIONS,
-  MOCK_NOTIFICATIONS,
-  MOCK_PRICES,
-  MOCK_SETTINGS,
-} from '@/data/mocks';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
-const BASE_URL = 'https://saas-pressing.onrender.com';
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? (import.meta.env.DEV ? '' : 'https://saas-pressing.onrender.com');
 const ACCESS_TOKEN_KEY = 'pressnet_access';
 const REFRESH_TOKEN_KEY = 'pressnet_refresh';
 
@@ -744,7 +738,7 @@ export async function fetchMissions(): Promise<Mission[]> {
         createdAt: o.createdAt,
       }));
   } catch {
-    return [...MOCK_MISSIONS];
+    return [];
   }
 }
 
@@ -810,7 +804,7 @@ export async function fetchSettings(): Promise<PressingSettings> {
       city: '',
       address: profile.address ?? '',
       openingHours: '',
-      primaryColor: profile.primary_color ?? '#C75B39',
+      primaryColor: profile.primary_color ?? '#142B4A',
       smsNotifications: false,
       emailNotifications: false,
       orderReadySms: false,
@@ -818,7 +812,20 @@ export async function fetchSettings(): Promise<PressingSettings> {
       plan: 'standard',
     };
   } catch {
-    return { ...MOCK_SETTINGS };
+    return {
+      name: 'PressNet',
+      phone: '',
+      email: '',
+      city: '',
+      address: '',
+      openingHours: '08h00 - 19h00',
+      primaryColor: '#142B4A',
+      smsNotifications: false,
+      emailNotifications: false,
+      orderReadySms: false,
+      paymentReminderSms: false,
+      plan: 'standard',
+    };
   }
 }
 
@@ -833,7 +840,7 @@ export async function saveSettings(settings: PressingSettings): Promise<Pressing
   return settings;
 }
 
-// ─── Tarification (non disponible dans l'API — mocks maintenus) ──────────────
+// ─── Tarification ─────────────────────────────────────────────────────────────
 
 /** GET /api/catalog/ — catalogue du pressing (staff JWT) */
 export async function fetchPrices(): Promise<PriceItem[]> {
@@ -845,8 +852,7 @@ export async function fetchPrices(): Promise<PriceItem[]> {
       .filter((t) => t.is_active)
       .map((t) => ({ id: t.id, name: t.name, category: t.category || 'Vêtements', price: parseFloat(t.price) }));
   } catch {
-    // Hors ligne / serveur absent : tarifs standard
-    return [...MOCK_PRICES];
+    return [];
   }
 }
 
@@ -866,10 +872,23 @@ export async function savePrices(prices: PriceItem[]): Promise<PriceItem[]> {
   return fetchPrices();
 }
 
-// ─── Notifications (non disponibles dans l'API — mocks maintenus) ─────────────
+// ─── Notifications (générées dynamiquement à partir des commandes réelles) ───
 
 export async function fetchNotifications(): Promise<Notification[]> {
-  return [...MOCK_NOTIFICATIONS];
+  try {
+    const orders = await fetchOrders();
+    const readyOrders = orders.filter((o) => o.status === 'pret' && !o.claimed);
+    return readyOrders.slice(0, 5).map((o) => ({
+      id: `notif-ready-${o.id}`,
+      title: `Commande ${o.ticket} prête`,
+      message: `La commande ${o.ticket} est prête pour retrait client.`,
+      date: o.createdAt,
+      read: false,
+      type: 'commande' as const,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 // ─── SMS (non disponible dans l'API publique) ─────────────────────────────────

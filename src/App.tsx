@@ -8,6 +8,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { useBrandTheme } from '@/lib/theme';
 
 // Découpage du bundle pour une connexion lente (lazy loading des routes)
+const HomePage = lazy(() => import('@/pages/HomePage'));
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
 const DashboardPage = lazy(() => import('@/pages/app/DashboardPage'));
@@ -71,8 +72,8 @@ export default function App() {
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            {/* Accueil : redirige selon le rôle */}
-            <Route path="/" element={<RoleHome />} />
+            {/* Page d'accueil publique (vitrine SaaS & accès client) */}
+            <Route path="/" element={<HomePage />} />
 
             {/* Authentification (sans sidebar) */}
             <Route path="/login" element={<LoginPage />} />
