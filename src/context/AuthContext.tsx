@@ -98,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     api.logout(); // Efface les tokens JWT du localStorage
     setUser(null);
     localStorage.removeItem(USER_STORAGE_KEY);
+    localStorage.removeItem('pressnet-data');
   }, []);
 
   const value = useMemo<AuthContextValue>(

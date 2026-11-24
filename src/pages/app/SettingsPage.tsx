@@ -30,11 +30,11 @@ const SECTIONS: { value: Section; label: string; icon: typeof Building2; descrip
 
 const COLOR_SWATCHES = [
   { value: '#142B4A', label: 'Bleu marine (PressNet)' },
+  { value: '#102238', label: 'Bleu marine profond' },
   { value: '#1E3A5F', label: 'Bleu nuit' },
-  { value: '#0D9488', label: 'Sarcelle' },
+  { value: '#6B829C', label: 'Bleu gris ardoise' },
   { value: '#2563EB', label: 'Bleu cobalt' },
-  { value: '#16A34A', label: 'Vert émeraude' },
-  { value: '#C75B39', label: 'Terracotta' }
+  { value: '#0D9488', label: 'Bleu sarcelle' },
 ];
 
 export default function SettingsPage() {
@@ -97,9 +97,8 @@ export default function SettingsPage() {
                   type="button"
                   onClick={() => setSection(value)}
                   aria-current={section === value ? 'true' : undefined}
-                  className={`flex w-full items-center gap-3 rounded-lg px-3.5 py-3 text-left transition-colors ${
-                    section === value ? 'bg-primary text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
-                  }`}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3.5 py-3 text-left transition-colors ${section === value ? 'bg-primary text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
+                    }`}
                 >
                   <Icon size={18} className={section === value ? 'text-white' : 'text-slate-400'} aria-hidden="true" />
                   <span className="min-w-0">
@@ -201,9 +200,8 @@ export default function SettingsPage() {
                           applyPrimaryColor(swatch.value); // application immédiate
                         }}
                         title={swatch.label}
-                        className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-transform hover:scale-110 ${
-                          draft.primaryColor === swatch.value ? 'border-charcoal' : 'border-transparent'
-                        }`}
+                        className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-transform hover:scale-110 ${draft.primaryColor === swatch.value ? 'border-charcoal' : 'border-transparent'
+                          }`}
                         style={{ backgroundColor: swatch.value }}
                         aria-label={`Couleur ${swatch.label}`}
                         aria-pressed={draft.primaryColor === swatch.value}

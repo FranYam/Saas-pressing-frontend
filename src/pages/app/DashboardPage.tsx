@@ -179,7 +179,7 @@ export default function DashboardPage() {
               icon={PackageOpen}
               label="En cours de nettoyage / repassage"
               value={String(ordersInProgress)}
-              accent="orange"
+              accent="primary"
             />
             <KPICard
               icon={UserCheck}
@@ -193,23 +193,23 @@ export default function DashboardPage() {
 
       {/* Section Alerte Métier : Linge non réclamé (> 7 jours) */}
       {unclaimedList.length > 0 && (
-        <section className="card border-amber-200/80 bg-amber-50/30 p-5" aria-label="Alertes linge non réclamé">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200/60 pb-3">
-            <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-700">
-                <Clock size={18} aria-hidden="true" />
-              </span>
-              <div>
-                <h2 className="text-sm font-semibold text-navy">
-                  Linge prêt non réclamé depuis plus de 7 jours ({unclaimedList.length})
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Ces articles encombrent les portants. Pensez à relancer les clients par téléphone ou SMS.
-                </p>
-              </div>
-            </div>
-            {isGerant && (
-              <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+            <section className="card border-slate-200/80 bg-white p-5" aria-label="Alertes linge non réclamé">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-navy/10 text-navy">
+                      <Clock size={18} aria-hidden="true" />
+                    </span>
+                    <div>
+                      <h2 className="text-sm font-semibold text-navy">
+                        Linge prêt non réclamé depuis plus de 7 jours ({unclaimedList.length})
+                      </h2>
+                      <p className="text-xs text-slate-500">
+                        Ces articles encombrent les portants. Pensez à relancer les clients par téléphone ou SMS.
+                      </p>
+                    </div>
+                </div>
+                {isGerant && (
+              <span className="rounded-full bg-primary-50 px-2.5 py-0.5 text-xs font-semibold text-primary">
                 Priorité relance
               </span>
             )}
@@ -219,7 +219,7 @@ export default function DashboardPage() {
             {unclaimedList.slice(0, 6).map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between rounded-lg border border-amber-200/80 bg-white p-3 shadow-xs"
+                className="flex items-center justify-between rounded-lg border border-slate-200/70 bg-white p-3 shadow-xs"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -246,170 +246,170 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {/* Grille principale : Commandes récentes + Colonne secondaire */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Commandes récentes */}
-        <section className="card overflow-hidden lg:col-span-2" aria-label="Commandes récentes">
-          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-            <div>
-              <h2 className="card-title">Dernières commandes enregistrées</h2>
-              <p className="text-xs text-slate-500">Flux d'activité récent au comptoir et en ligne</p>
-            </div>
-            <Link to="/orders" className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
-              Tout voir <ArrowRight size={13} aria-hidden="true" />
-            </Link>
-          </div>
+            {/* Grille principale : Commandes récentes + Colonne secondaire */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              {/* Commandes récentes */}
+              <section className="card overflow-hidden lg:col-span-2" aria-label="Commandes récentes">
+                <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                  <div>
+                    <h2 className="card-title">Dernières commandes enregistrées</h2>
+                    <p className="text-xs text-slate-500">Flux d'activité récent au comptoir et en ligne</p>
+                  </div>
+                  <Link to="/orders" className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
+                    Tout voir <ArrowRight size={13} aria-hidden="true" />
+                  </Link>
+                </div>
 
-          <div className="overflow-x-auto scrollbar-thin">
-            <table className="w-full min-w-[560px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/60">
-                  <th className="table-th">Ticket</th>
-                  <th className="table-th">Client</th>
-                  <th className="table-th">Articles</th>
-                  <th className="table-th">Statut</th>
-                  <th className="table-th text-right">Montant</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {recentOrders.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-8 text-center text-sm text-slate-400">
-                      Aucune commande enregistrée pour le moment.
-                    </td>
-                  </tr>
-                ) : (
-                  recentOrders.map((o) => {
-                    const c = clientById.get(o.clientId);
-                    return (
-                      <tr key={o.id} className="table-row-hover">
-                        <td className="table-td font-semibold text-primary">
-                          <Link to={`/orders/${o.id}`} className="hover:underline">
-                            {o.ticket}
-                          </Link>
-                        </td>
-                        <td className="table-td">
-                          <div className="flex items-center gap-2">
-                            {c && <Avatar firstName={c.firstName} lastName={c.lastName} size={26} />}
-                            <span className="truncate font-medium text-navy">
-                              {c ? `${c.firstName} ${c.lastName}` : 'Client'}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="table-td text-slate-500">
-                          {o.items.reduce((sum, i) => sum + i.quantity, 0)} pièce(s)
-                        </td>
-                        <td className="table-td">
-                          <StatusBadge variant={o.status} />
-                        </td>
-                        <td className="table-td text-right font-semibold text-navy tabular-nums">
-                          {formatFCFA(o.total)}
-                        </td>
+                <div className="overflow-x-auto scrollbar-thin">
+                  <table className="w-full min-w-[560px] text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-100 bg-slate-50/60">
+                        <th className="table-th">Ticket</th>
+                        <th className="table-th">Client</th>
+                        <th className="table-th">Articles</th>
+                        <th className="table-th">Statut</th>
+                        <th className="table-th text-right">Montant</th>
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        {/* Colonne latérale : Encaissements récents ou Actions rapides */}
-        <div className="space-y-6">
-          {/* Actions rapides */}
-          <div className="card p-5">
-            <h3 className="text-sm font-semibold text-navy">Actions rapides</h3>
-            <div className="mt-3 space-y-2">
-              <Link
-                to="/orders/new"
-                className="flex items-center justify-between rounded-lg border border-slate-200/80 p-3 transition-colors hover:border-primary-300 hover:bg-primary-50/40"
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary">
-                    <Plus size={16} />
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium text-navy">Nouvelle commande</p>
-                    <p className="text-xs text-slate-500">Enregistrer un dépôt de linge</p>
-                  </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {recentOrders.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-8 text-center text-sm text-slate-400">
+                            Aucune commande enregistrée pour le moment.
+                          </td>
+                        </tr>
+                      ) : (
+                        recentOrders.map((o) => {
+                          const c = clientById.get(o.clientId);
+                          return (
+                            <tr key={o.id} className="table-row-hover">
+                              <td className="table-td font-semibold text-primary">
+                                <Link to={`/orders/${o.id}`} className="hover:underline">
+                                  {o.ticket}
+                                </Link>
+                              </td>
+                              <td className="table-td">
+                                <div className="flex items-center gap-2">
+                                  {c && <Avatar firstName={c.firstName} lastName={c.lastName} size={26} />}
+                                  <span className="truncate font-medium text-navy">
+                                    {c ? `${c.firstName} ${c.lastName}` : 'Client'}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="table-td text-slate-500">
+                                {o.items.reduce((sum, i) => sum + i.quantity, 0)} pièce(s)
+                              </td>
+                              <td className="table-td">
+                                <StatusBadge variant={o.status} />
+                              </td>
+                              <td className="table-td text-right font-semibold text-navy tabular-nums">
+                                {formatFCFA(o.total)}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-                <ArrowRight size={14} className="text-slate-400" />
-              </Link>
+              </section>
 
-              <Link
-                to="/clients"
-                className="flex items-center justify-between rounded-lg border border-slate-200/80 p-3 transition-colors hover:border-primary-300 hover:bg-primary-50/40"
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary">
-                    <UserCheck size={16} />
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium text-navy">Répertoire clients</p>
-                    <p className="text-xs text-slate-500">Recherche par numéro ou nom</p>
-                  </div>
-                </div>
-                <ArrowRight size={14} className="text-slate-400" />
-              </Link>
-
-              <Link
-                to="/orders"
-                className="flex items-center justify-between rounded-lg border border-slate-200/80 p-3 transition-colors hover:border-primary-300 hover:bg-primary-50/40"
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary">
-                    <Search size={16} />
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium text-navy">Rechercher un ticket</p>
-                    <p className="text-xs text-slate-500">Retrouver une commande</p>
-                  </div>
-                </div>
-                <ArrowRight size={14} className="text-slate-400" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Règlements récents */}
-          {isGerant && (
-            <div className="card overflow-hidden">
-              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-                <h3 className="text-sm font-semibold text-navy">Derniers règlements</h3>
-                <Link to="/payments" className="text-xs font-semibold text-primary hover:underline">
-                  Voir tout
-                </Link>
-              </div>
-              <ul className="divide-y divide-slate-100">
-                {recentPayments.length === 0 ? (
-                  <li className="px-5 py-6 text-center text-xs text-slate-400">
-                    Aucun paiement enregistré récemment
-                  </li>
-                ) : (
-                  recentPayments.map((p) => (
-                    <li key={p.id} className="flex items-center justify-between px-5 py-3">
-                      <div>
-                        <p className="text-sm font-semibold text-navy tabular-nums">
-                          {formatFCFA(p.amount)}
-                        </p>
-                        <p className="text-xs text-slate-400">
-                          {p.method === 'orange_money'
-                            ? 'Orange Money'
-                            : p.method === 'moov_money'
-                            ? 'Moov Money'
-                            : 'Espèces'} · {formatRelative(p.date)}
-                        </p>
+              {/* Colonne latérale : Encaissements récents ou Actions rapides */}
+              <div className="space-y-6">
+                {/* Actions rapides */}
+                <div className="card p-5">
+                  <h3 className="text-sm font-semibold text-navy">Actions rapides</h3>
+                  <div className="mt-3 space-y-2">
+                    <Link
+                      to="/orders/new"
+                      className="flex items-center justify-between rounded-lg border border-slate-200/80 p-3 transition-colors hover:border-primary-300 hover:bg-primary-50/40"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary">
+                          <Plus size={16} />
+                        </span>
+                        <div>
+                          <p className="text-sm font-medium text-navy">Nouvelle commande</p>
+                          <p className="text-xs text-slate-500">Enregistrer un dépôt de linge</p>
+                        </div>
                       </div>
-                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                        Encaissé
-                      </span>
-                    </li>
-                  ))
+                      <ArrowRight size={14} className="text-slate-400" />
+                    </Link>
+
+                    <Link
+                      to="/clients"
+                      className="flex items-center justify-between rounded-lg border border-slate-200/80 p-3 transition-colors hover:border-primary-300 hover:bg-primary-50/40"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary">
+                          <UserCheck size={16} />
+                        </span>
+                        <div>
+                          <p className="text-sm font-medium text-navy">Répertoire clients</p>
+                          <p className="text-xs text-slate-500">Recherche par numéro ou nom</p>
+                        </div>
+                      </div>
+                      <ArrowRight size={14} className="text-slate-400" />
+                    </Link>
+
+                    <Link
+                      to="/orders"
+                      className="flex items-center justify-between rounded-lg border border-slate-200/80 p-3 transition-colors hover:border-primary-300 hover:bg-primary-50/40"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary">
+                          <Search size={16} />
+                        </span>
+                        <div>
+                          <p className="text-sm font-medium text-navy">Rechercher un ticket</p>
+                          <p className="text-xs text-slate-500">Retrouver une commande</p>
+                        </div>
+                      </div>
+                      <ArrowRight size={14} className="text-slate-400" />
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Règlements récents */}
+                {isGerant && (
+                  <div className="card overflow-hidden">
+                    <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                      <h3 className="text-sm font-semibold text-navy">Derniers règlements</h3>
+                      <Link to="/payments" className="text-xs font-semibold text-primary hover:underline">
+                        Voir tout
+                      </Link>
+                    </div>
+                    <ul className="divide-y divide-slate-100">
+                      {recentPayments.length === 0 ? (
+                        <li className="px-5 py-6 text-center text-xs text-slate-400">
+                          Aucun paiement enregistré récemment
+                        </li>
+                      ) : (
+                        recentPayments.map((p) => (
+                          <li key={p.id} className="flex items-center justify-between px-5 py-3">
+                            <div>
+                              <p className="text-sm font-semibold text-navy tabular-nums">
+                                {formatFCFA(p.amount)}
+                              </p>
+                              <p className="text-xs text-slate-400">
+                                {p.method === 'orange_money'
+                                  ? 'Orange Money'
+                                  : p.method === 'moov_money'
+                                    ? 'Moov Money'
+                                    : 'Espèces'} · {formatRelative(p.date)}
+                              </p>
+                            </div>
+                            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                              Encaissé
+                            </span>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  </div>
                 )}
-              </ul>
+              </div>
             </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+          </div>
+          );
 }

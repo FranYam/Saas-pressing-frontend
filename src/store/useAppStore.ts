@@ -75,116 +75,117 @@ export const useAppStore = create<AppStore>()(
         }
       },
 
-      hydrate: async () => {
-        if (get().loading || get().initialized) return;
-        set({ loading: true });
-        try {
-          const results = await Promise.allSettled([
-            api.fetchOrders(),
-            api.fetchClients(),
-            api.fetchPayments(),
-            api.fetchEmployees(),
-            api.fetchMissions(),
-            api.fetchPrices(),
-            api.fetchSettings(),
-            api.fetchNotifications(),
-            api.fetchDashboard(),
-          ]);
+        hydrate: async (force = false) => {
+          if (get().loading) return;
+          if (get().initialized && !force) return;
+          set({ loading: true });
+          try {
+            const results = await Promise.allSettled([
+              api.fetchOrders(),
+              api.fetchClients(),
+              api.fetchPayments(),
+              api.fetchEmployees(),
+              api.fetchMissions(),
+              api.fetchPrices(),
+              api.fetchSettings(),
+              api.fetchNotifications(),
+              api.fetchDashboard(),
+            ]);
 
-          const [ordersRes, clientsRes, paymentsRes, employeesRes, missionsRes, pricesRes, settingsRes, notifsRes, dashRes] = results;
+            const [ordersRes, clientsRes, paymentsRes, employeesRes, missionsRes, pricesRes, settingsRes, notifsRes, dashRes] = results;
 
-          set({
-            orders: ordersRes.status === 'fulfilled' ? ordersRes.value : get().orders,
-            clients: clientsRes.status === 'fulfilled' ? clientsRes.value : get().clients,
-            payments: paymentsRes.status === 'fulfilled' ? paymentsRes.value : get().payments,
-            employees: employeesRes.status === 'fulfilled' ? employeesRes.value : get().employees,
-            missions: missionsRes.status === 'fulfilled' ? missionsRes.value : get().missions,
-            prices: pricesRes.status === 'fulfilled' ? pricesRes.value : get().prices,
-            settings: settingsRes.status === 'fulfilled' ? settingsRes.value : get().settings,
-            notifications: notifsRes.status === 'fulfilled' ? notifsRes.value : get().notifications,
-            dashboardSummary: dashRes.status === 'fulfilled' ? dashRes.value : get().dashboardSummary,
-            initialized: true,
-          });
-        } finally {
-          set({ loading: false });
-        }
-      },
+            set({
+              orders: ordersRes.status === 'fulfilled' ? ordersRes.value : [],
+              clients: clientsRes.status === 'fulfilled' ? clientsRes.value : [],
+              payments: paymentsRes.status === 'fulfilled' ? paymentsRes.value : [],
+              employees: employeesRes.status === 'fulfilled' ? employeesRes.value : [],
+              missions: missionsRes.status === 'fulfilled' ? missionsRes.value : [],
+              prices: pricesRes.status === 'fulfilled' ? pricesRes.value : [],
+              settings: settingsRes.status === 'fulfilled' ? settingsRes.value : get().settings,
+              notifications: notifsRes.status === 'fulfilled' ? notifsRes.value : [],
+              dashboardSummary: dashRes.status === 'fulfilled' ? dashRes.value : null,
+              initialized: true,
+            });
+          } finally {
+            set({ loading: false });
+          }
+        },
 
-      updateOrderStatus: async (orderId, status) => {
-        const updated = await api.updateOrderStatus(orderId, status);
-        set((s) => ({ orders: s.orders.map((o) => (o.id === orderId ? updated : o)) }));
-      },
+          updateOrderStatus: async (orderId, status) => {
+            const updated = await api.updateOrderStatus(orderId, status);
+            set((s) => ({ orders: s.orders.map((o) => (o.id === orderId ? updated : o)) }));
+          },
 
-      createOrder: async (payload) => {
-        const order = await api.createOrder(payload);
-        set((s) => ({ orders: [order, ...s.orders] }));
-        return order;
-      },
+            createOrder: async (payload) => {
+              const order = await api.createOrder(payload);
+              set((s) => ({ orders: [order, ...s.orders] }));
+              return order;
+            },
 
-      recordPayment: async (orderId, method, amount) => {
-        const payment = await api.recordPayment(orderId, method, amount);
-        set((s) => ({
-          payments: [payment, ...s.payments],
-          orders: s.orders.map((o) =>
-            o.id === orderId ? { ...o, paidAmount: Math.min(o.paidAmount + amount, o.total), paymentMethod: method } : o
-          ),
-        }));
-      },
+              recordPayment: async (orderId, method, amount) => {
+                const payment = await api.recordPayment(orderId, method, amount);
+                set((s) => ({
+                  payments: [payment, ...s.payments],
+                  orders: s.orders.map((o) =>
+                    o.id === orderId ? { ...o, paidAmount: Math.min(o.paidAmount + amount, o.total), paymentMethod: method } : o
+                  ),
+                }));
+              },
 
-      toggleEmployeeActive: async (id) => {
-        const updated = await api.toggleEmployeeActive(id);
-        set((s) => ({ employees: s.employees.map((e) => (e.id === id ? updated : e)) }));
-      },
+                toggleEmployeeActive: async (id) => {
+                  const updated = await api.toggleEmployeeActive(id);
+                  set((s) => ({ employees: s.employees.map((e) => (e.id === id ? updated : e)) }));
+                },
 
-      createEmployee: async (payload) => {
-        await api.createEmployee(payload);
-        try {
-          set({ employees: await api.fetchEmployees() });
-        } catch {
-          // Ignorer
-        }
-      },
+                  createEmployee: async (payload) => {
+                    await api.createEmployee(payload);
+                    try {
+                      set({ employees: await api.fetchEmployees() });
+                    } catch {
+                      // Ignorer
+                    }
+                  },
 
-      updateEmployee: async (id, patch) => {
-        await api.updateEmployee(id, patch);
-        try {
-          set({ employees: await api.fetchEmployees() });
-        } catch {
-          // Ignorer
-        }
-      },
+                    updateEmployee: async (id, patch) => {
+                      await api.updateEmployee(id, patch);
+                      try {
+                        set({ employees: await api.fetchEmployees() });
+                      } catch {
+                        // Ignorer
+                      }
+                    },
 
-      assignCourier: async (missionId, courierId) => {
-        const updated = await api.assignCourier(missionId, courierId);
-        set((s) => ({ missions: s.missions.map((m) => (m.id === missionId ? updated : m)) }));
-      },
+                      assignCourier: async (missionId, courierId) => {
+                        const updated = await api.assignCourier(missionId, courierId);
+                        set((s) => ({ missions: s.missions.map((m) => (m.id === missionId ? updated : m)) }));
+                      },
 
-      updateMissionStatus: async (missionId, status) => {
-        const updated = await api.updateMissionStatus(missionId, status);
-        set((s) => ({ missions: s.missions.map((m) => (m.id === missionId ? updated : m)) }));
-      },
+                        updateMissionStatus: async (missionId, status) => {
+                          const updated = await api.updateMissionStatus(missionId, status);
+                          set((s) => ({ missions: s.missions.map((m) => (m.id === missionId ? updated : m)) }));
+                        },
 
-      saveSettings: async (settings) => {
-        await api.saveSettings(settings);
-        set({ settings });
-      },
+                          saveSettings: async (settings) => {
+                            await api.saveSettings(settings);
+                            set({ settings });
+                          },
 
-      savePrices: async (prices) => {
-        await api.savePrices(prices);
-        set({ prices });
-      },
+                            savePrices: async (prices) => {
+                              await api.savePrices(prices);
+                              set({ prices });
+                            },
 
-      createClient: async (name, phone) => {
-        const created = await api.createClient({ name, phone_number: phone });
-        set((s) => ({ clients: [created, ...s.clients] }));
-        return created;
-      },
+                              createClient: async (name, phone) => {
+                                const created = await api.createClient({ name, phone_number: phone });
+                                set((s) => ({ clients: [created, ...s.clients] }));
+                                return created;
+                              },
 
-      markNotificationRead: (id) =>
-        set((s) => ({ notifications: s.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)) })),
+                                markNotificationRead: (id) =>
+                                  set((s) => ({ notifications: s.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)) })),
 
-      markAllNotificationsRead: () =>
-        set((s) => ({ notifications: s.notifications.map((n) => ({ ...n, read: true })) })),
+                                  markAllNotificationsRead: () =>
+                                    set((s) => ({ notifications: s.notifications.map((n) => ({ ...n, read: true })) })),
     }),
     {
       name: 'pressnet-data',
@@ -198,7 +199,6 @@ export const useAppStore = create<AppStore>()(
         settings: state.settings,
         notifications: state.notifications,
         dashboardSummary: state.dashboardSummary,
-        initialized: state.initialized,
       }),
     }
   )

@@ -60,7 +60,7 @@ export default function DeliveriesPage() {
 
       {/* Stats du jour */}
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-        <StatCard icon={Truck} label="À livrer" value={String(stats.aLivrer)} accent="orange" />
+        <StatCard icon={Truck} label="À livrer" value={String(stats.aLivrer)} accent="primary" />
         <StatCard icon={Timer} label="En cours" value={String(stats.enCours)} accent="blue" />
         <StatCard icon={CheckCircle2} label="Terminées" value={String(stats.livrees)} accent="green" />
         <StatCard icon={Inbox} label="En attente de collecte" value={String(stats.enAttenteCollecte)} accent="violet" />
@@ -118,7 +118,7 @@ export default function DeliveriesPage() {
                             <span className="text-xs font-medium">{courier.full}</span>
                           </div>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-orange-500">
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-500">
                             <UserRound size={13} aria-hidden="true" /> Non assigné
                           </span>
                         )}
@@ -219,9 +219,8 @@ export default function DeliveriesPage() {
                         type="button"
                         onClick={() => setSelectedCourier(c.id)}
                         aria-pressed={selectedCourier === c.id}
-                        className={`flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors ${
-                          selectedCourier === c.id ? 'border-primary bg-primary-50' : 'border-slate-200 hover:border-primary-300'
-                        }`}
+                        className={`flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors ${selectedCourier === c.id ? 'border-primary bg-primary-50' : 'border-slate-200 hover:border-primary-300'
+                          }`}
                       >
                         <Avatar firstName={first} lastName={rest.join(' ')} size={36} />
                         <div className="flex-1">

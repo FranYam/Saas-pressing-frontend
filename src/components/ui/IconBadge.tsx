@@ -6,7 +6,7 @@ export const ACCENTS = {
   green: 'bg-green-50 text-green-600',
   red: 'bg-red-50 text-red-500',
   blue: 'bg-blue-50 text-blue-500',
-  orange: 'bg-orange-50 text-orange-500',
+  orange: 'bg-primary-50 text-primary-600',
   violet: 'bg-violet-50 text-violet-500',
   slate: 'bg-slate-100 text-slate-500'
 } as const;

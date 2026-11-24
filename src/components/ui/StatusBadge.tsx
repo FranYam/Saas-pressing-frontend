@@ -5,21 +5,21 @@ type BadgeVariant = OrderStatus | MissionStatus | MissionType | PaymentMethod;
 
 const STYLES: Record<BadgeVariant, string> = {
   // Statuts commande
-  recu: 'bg-blue-50 text-blue-500',
-  traitement: 'bg-orange-50 text-orange-500',
-  pret: 'bg-green-50 text-green-500',
-  livre: 'bg-slate-100 text-slate-400',
+  recu: 'bg-blue-50 text-blue-600',
+  traitement: 'bg-sky-50 text-sky-700',
+  pret: 'bg-emerald-50 text-emerald-700',
+  livre: 'bg-slate-100 text-slate-500',
   // Statuts mission
-  a_faire: 'bg-orange-50 text-orange-500',
-  en_cours: 'bg-blue-50 text-blue-500',
-  terminee: 'bg-green-50 text-green-500',
+  a_faire: 'bg-primary-50 text-primary-700',
+  en_cours: 'bg-blue-50 text-blue-600',
+  terminee: 'bg-emerald-50 text-emerald-700',
   // Types mission
   collecte: 'bg-primary-50 text-primary-600',
-  livraison: 'bg-violet-50 text-violet-500',
+  livraison: 'bg-violet-50 text-violet-600',
   // Modes de paiement
-  especes: 'bg-slate-100 text-slate-600',
-  orange_money: 'bg-orange-50 text-orange-600',
-  moov_money: 'bg-blue-50 text-blue-600'
+  especes: 'bg-slate-100 text-slate-700',
+  orange_money: 'bg-slate-100 text-slate-700',
+  moov_money: 'bg-blue-50 text-blue-700'
 };
 
 const LABELS: Record<string, string> = {

@@ -340,9 +340,8 @@ export default function NewOrderPage() {
                     type="button"
                     onClick={() => setPaymentType(value)}
                     aria-pressed={paymentType === value}
-                    className={`flex items-center gap-2.5 rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
-                      paymentType === value ? 'border-primary bg-primary-50 text-primary' : 'border-slate-200 text-slate-600 hover:border-primary-300'
-                    }`}
+                    className={`flex items-center gap-2.5 rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${paymentType === value ? 'border-primary bg-primary-50 text-primary' : 'border-slate-200 text-slate-600 hover:border-primary-300'
+                      }`}
                   >
                     <Icon size={16} aria-hidden="true" />
                     {label}
@@ -368,9 +367,8 @@ export default function NewOrderPage() {
                       type="button"
                       onClick={() => setPaymentMethod(m.value)}
                       aria-pressed={paymentMethod === m.value}
-                      className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
-                        paymentMethod === m.value ? 'border-primary bg-primary text-white' : 'border-slate-200 text-slate-600 hover:border-primary-300'
-                      }`}
+                      className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${paymentMethod === m.value ? 'border-primary bg-primary text-white' : 'border-slate-200 text-slate-600 hover:border-primary-300'
+                        }`}
                     >
                       {m.label}
                     </button>
@@ -408,9 +406,8 @@ export default function NewOrderPage() {
                     type="button"
                     onClick={() => setChannel(value)}
                     aria-pressed={channel === value}
-                    className={`flex items-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
-                      channel === value ? 'border-primary bg-primary-50 text-primary' : 'border-slate-200 text-slate-600 hover:border-primary-300'
-                    }`}
+                    className={`flex items-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${channel === value ? 'border-primary bg-primary-50 text-primary' : 'border-slate-200 text-slate-600 hover:border-primary-300'
+                      }`}
                   >
                     <Icon size={16} aria-hidden="true" />
                     {label}
@@ -467,7 +464,7 @@ export default function NewOrderPage() {
               </>
             )}
             {paymentType === 'credit' && (
-              <p className="rounded-lg bg-orange-50 px-3 py-2 text-xs font-medium text-orange-600">
+              <p className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-medium text-slate-700">
                 Commande à crédit — la totalité ({formatFCFA(total)}) sera suivie en créance.
               </p>
             )}

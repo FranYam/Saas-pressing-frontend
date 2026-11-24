@@ -8,13 +8,14 @@
 @tailwind utilities;
 
 @layer base {
+
   /*
    * Palette primaire — Bleu marine #142B4A (par défaut PressNet)
    * Surchargée à l'exécution par lib/theme.ts si le pressing personnalise sa couleur.
    */
   :root {
-    --pn-primary:     20 43 74;
-    --pn-primary-50:  237 242 249;
+    --pn-primary: 20 43 74;
+    --pn-primary-50: 237 242 249;
     --pn-primary-100: 214 225 240;
     --pn-primary-200: 168 192 220;
     --pn-primary-300: 108 146 187;
@@ -25,9 +26,9 @@
     --pn-primary-800: 9 19 31;
     --pn-primary-900: 6 13 22;
 
-    --pn-navy:        #142B4A;
-    --pn-navy-deep:   #102238;
-    --pn-surface:     #F5F7FA;
+    --pn-navy: #142B4A;
+    --pn-navy-deep: #102238;
+    --pn-surface: #F5F7FA;
   }
 
   html {
@@ -49,10 +50,12 @@
     @apply text-2xl font-semibold tracking-tight;
     color: #142B4A;
   }
+
   h2 {
     @apply text-xl font-semibold tracking-tight;
     color: #142B4A;
   }
+
   h3 {
     @apply text-base font-semibold;
     color: #142B4A;
@@ -69,7 +72,9 @@
   }
 
   /* Chiffres tabulaires pour les montants */
-  .tabular-nums { font-variant-numeric: tabular-nums; }
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 @layer utilities {
@@ -77,28 +82,35 @@
     background: linear-gradient(180deg, #E6EFF8 0%, #EFF4F9 260px, #F5F7FA 100%);
     background-attachment: fixed;
   }
+
   .bg-navy {
     background-color: #142B4A;
   }
+
   .bg-navy-deep {
     background-color: #102238;
   }
+
   .text-navy {
     color: #142B4A;
   }
+
   .text-navy-deep {
     color: #102238;
   }
 }
 
 @layer components {
+
   /* ── Cartes ─────────────────────────────────────────────────────── */
   .card {
     @apply rounded-xl border border-slate-200/70 bg-white shadow-card;
   }
+
   .card-hover {
     @apply transition-shadow duration-200 hover:shadow-card-hover;
   }
+
   .card-title {
     @apply text-base font-semibold;
     color: #142B4A;
@@ -106,45 +118,25 @@
 
   /* ── Boutons ─────────────────────────────────────────────────────── */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg
-           bg-primary px-4 py-2.5 text-sm font-semibold text-white
-           shadow-sm transition-all duration-150
-           hover:bg-primary-600 hover:shadow-md
-           active:scale-[0.98]
-           disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none
-           focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-primary-600 hover:shadow-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg
-           border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold
-           shadow-sm transition-all duration-150
-           hover:border-primary-200 hover:bg-primary-50 hover:text-primary
-           active:scale-[0.98]
-           disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold shadow-sm transition-all duration-150 hover:border-primary-200 hover:bg-primary-50 hover:text-primary active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
     color: #142B4A;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg
-           px-3 py-2 text-sm font-medium text-slate-600
-           transition-colors hover:bg-primary-50 hover:text-primary;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-primary-50 hover:text-primary;
   }
 
   .btn-danger {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg
-           bg-red-600 px-4 py-2.5 text-sm font-semibold text-white
-           shadow-sm transition-all duration-150 hover:bg-red-700
-           active:scale-[0.98] disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-red-700 active:scale-[0.98] disabled:opacity-50;
   }
 
   /* ── Formulaires ──────────────────────────────────────────────────── */
   .input-base {
-    @apply w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5
-           text-sm transition-colors
-           placeholder:text-slate-400
-           focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-100
-           disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400;
+    @apply w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm transition-colors placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400;
     color: #142B4A;
   }
 
@@ -175,10 +167,12 @@
   .table-th {
     @apply px-4 py-3 text-left text-[11px] font-semibold tracking-wide text-slate-500 uppercase;
   }
+
   .table-td {
     @apply px-4 py-3.5 text-sm;
     color: #142B4A;
   }
+
   .table-row-hover {
     @apply cursor-pointer transition-colors hover:bg-primary-50/50;
   }
@@ -186,40 +180,76 @@
 
 /* ── Animations ──────────────────────────────────────────────────── */
 @keyframes pn-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes pn-slide-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes pn-slide-in {
-  from { opacity: 0; transform: translateX(-8px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-.animate-fade-in  { animation: pn-fade-in  0.15s ease-out both; }
-.animate-slide-up { animation: pn-slide-up 0.18s ease-out both; }
-.animate-slide-in { animation: pn-slide-in 0.15s ease-out both; }
+.animate-fade-in {
+  animation: pn-fade-in 0.15s ease-out both;
+}
+
+.animate-slide-up {
+  animation: pn-slide-up 0.18s ease-out both;
+}
+
+.animate-slide-in {
+  animation: pn-slide-in 0.15s ease-out both;
+}
 
 /* ── Décor : grille fine pour panneaux sombres ───────────────────── */
 .bg-grid-dark {
   background-image:
-    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
   background-size: 32px 32px;
 }
 
 /* ── Scrollbar discrète ──────────────────────────────────────────── */
-.scrollbar-thin::-webkit-scrollbar { width: 5px; height: 5px; }
+.scrollbar-thin::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
 .scrollbar-thin::-webkit-scrollbar-thumb {
   @apply rounded-full bg-slate-200;
 }
-.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
 
 /* ── Utility responsive table ────────────────────────────────────── */
 @media (max-width: 639px) {
-  .table-mobile-hidden { display: none; }
+  .table-mobile-hidden {
+    display: none;
+  }
 }

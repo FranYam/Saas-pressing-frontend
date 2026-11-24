@@ -10,10 +10,10 @@ import { useOnlineStatus, usePwaInstall } from '@/lib/pwa';
 import { useClickOutside } from '@/lib/hooks';
 
 const NOTIF_META = {
-  commande:  { icon: Package,     accent: 'blue'   as const },
-  paiement:  { icon: CreditCard,  accent: 'green'  as const },
-  livraison: { icon: Truck,       accent: 'orange' as const },
-  systeme:   { icon: Settings,    accent: 'slate'  as const },
+  commande: { icon: Package, accent: 'blue' as const },
+  paiement: { icon: CreditCard, accent: 'green' as const },
+  livraison: { icon: Truck, accent: 'blue' as const },
+  systeme: { icon: Settings, accent: 'slate' as const },
 };
 
 interface HeaderProps {
@@ -96,9 +96,8 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
           <button
             type="button"
             onClick={() => setOpenNotif((o) => !o)}
-            className={`relative rounded-lg p-2 transition-colors ${
-              openNotif ? 'bg-primary-50 text-primary' : 'text-slate-500 hover:bg-primary-50 hover:text-primary'
-            }`}
+            className={`relative rounded-lg p-2 transition-colors ${openNotif ? 'bg-primary-50 text-primary' : 'text-slate-500 hover:bg-primary-50 hover:text-primary'
+              }`}
             aria-label={`Notifications${unread > 0 ? ` (${unread} non lues)` : ''}`}
             aria-expanded={openNotif}
           >

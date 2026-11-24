@@ -73,27 +73,27 @@ export default function ClientDetailPage() {
             </div>
           </div>
           {data.creance > 0 && (
-            <div className="rounded-xl border border-orange-200 bg-orange-50 px-5 py-3 text-center">
-              <p className="flex items-center justify-center gap-1.5 text-xs font-semibold text-orange-600">
-                <AlertCircle size={13} aria-hidden="true" />
-                Créance actuelle
-              </p>
-              <p className="mt-0.5 text-xl font-bold text-red-500 tabular-nums">{formatFCFA(data.creance)}</p>
-            </div>
+                <div className="rounded-xl border border-red-200 bg-red-50/60 px-5 py-3 text-center">
+                  <p className="flex items-center justify-center gap-1.5 text-xs font-semibold text-red-600">
+                    <AlertCircle size={13} aria-hidden="true" />
+                    Créance actuelle
+                  </p>
+                  <p className="mt-0.5 text-xl font-bold text-red-600 tabular-nums">{formatFCFA(data.creance)}</p>
+                </div>
           )}
-        </div>
+            </div>
 
         {/* Mini stats */}
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <StatCard icon={Wallet} label="Total payé" value={formatFCFA(data.totalSpent)} accent="green" />
-          <StatCard icon={ShoppingCart} label="Commandes" value={String(data.clientOrders.length)} accent="blue" />
-          <StatCard
-            icon={Tag}
-            label="Panier moyen"
-            value={formatFCFA(data.clientOrders.length ? Math.round(totalAllOrders / data.clientOrders.length) : 0)}
-            accent="violet"
-          />
-        </div>
+          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <StatCard icon={Wallet} label="Total payé" value={formatFCFA(data.totalSpent)} accent="green" />
+            <StatCard icon={ShoppingCart} label="Commandes" value={String(data.clientOrders.length)} accent="blue" />
+            <StatCard
+              icon={Tag}
+              label="Panier moyen"
+              value={formatFCFA(data.clientOrders.length ? Math.round(totalAllOrders / data.clientOrders.length) : 0)}
+              accent="violet"
+            />
+          </div>
       </section>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
@@ -181,14 +181,14 @@ export default function ClientDetailPage() {
 
       {/* Note créance */}
       {data.creance > 0 && (
-        <div className="flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-700" role="status">
-          <AlertCircle size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
-          <p>
-            <span className="font-semibold">Créance de {formatFCFA(data.creance)} en cours.</span> Un rappel SMS peut être envoyé
-            depuis l'onglet « Créances » de la page Paiements.
-          </p>
-        </div>
+          <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50/60 p-4 text-sm text-red-700" role="status">
+            <AlertCircle size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
+            <p>
+              <span className="font-semibold">Créance de {formatFCFA(data.creance)} en cours.</span> Un rappel SMS peut être envoyé
+              depuis l'onglet « Créances » de la page Paiements.
+            </p>
+          </div>
       )}
-    </div>
-  );
+        </div>
+      );
 }
