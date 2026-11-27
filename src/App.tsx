@@ -69,128 +69,128 @@ export default function App() {
     <AuthProvider>
       <BrandThemeSync />
       <ClientAccessProvider>
-      <BrowserRouter>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            {/* Page d'accueil publique (vitrine SaaS & accès client) */}
-            <Route path="/" element={<HomePage />} />
+        <BrowserRouter>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              {/* Page d'accueil publique (vitrine SaaS & accès client) */}
+              <Route path="/" element={<HomePage />} />
 
-            {/* Authentification (sans sidebar) */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+              {/* Authentification (sans sidebar) */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
 
-            {/* Application Gérant / Employé */}
-            <Route
-              element={
-                <ProtectedRoute roles={['gerant', 'employe']}>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/orders" element={<OrdersPage />} />
-              <Route path="/orders/new" element={<NewOrderPage />} />
-              <Route path="/orders/:id" element={<OrderDetailPage />} />
-              <Route path="/clients" element={<ClientsPage />} />
-              <Route path="/clients/:id" element={<ClientDetailPage />} />
-            </Route>
+              {/* Application Gérant / Employé */}
+              <Route
+                element={
+                  <ProtectedRoute roles={['gerant', 'employe']}>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/orders" element={<OrdersPage />} />
+                <Route path="/orders/new" element={<NewOrderPage />} />
+                <Route path="/orders/:id" element={<OrderDetailPage />} />
+                <Route path="/clients" element={<ClientsPage />} />
+                <Route path="/clients/:id" element={<ClientDetailPage />} />
+              </Route>
 
-            {/* Sections réservées au Gérant */}
-            <Route
-              path="/payments"
-              element={
-                <ProtectedRoute roles={['gerant']}>
-                  <AppLayout>
-                    <PaymentsPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/deliveries"
-              element={
-                <ProtectedRoute roles={['gerant']}>
-                  <AppLayout>
-                    <DeliveriesPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/team"
-              element={
-                <ProtectedRoute roles={['gerant']}>
-                  <AppLayout>
-                    <TeamPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute roles={['gerant']}>
-                  <AppLayout>
-                    <SettingsPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
+              {/* Sections réservées au Gérant */}
+              <Route
+                path="/payments"
+                element={
+                  <ProtectedRoute roles={['gerant']}>
+                    <AppLayout>
+                      <PaymentsPage />
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/deliveries"
+                element={
+                  <ProtectedRoute roles={['gerant']}>
+                    <AppLayout>
+                      <DeliveriesPage />
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/team"
+                element={
+                  <ProtectedRoute roles={['gerant']}>
+                    <AppLayout>
+                      <TeamPage />
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute roles={['gerant']}>
+                    <AppLayout>
+                      <SettingsPage />
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Portail Client — accès public par ticket + téléphone */}
-            <Route path="/client/access" element={<ClientAccessPage />} />
-            <Route path="/client/collect" element={<CollectPage />} />
-            <Route element={<RequireClientAccess />}>
-              <Route path="/client/dashboard" element={<ClientDashboardPage />} />
-              <Route path="/client/history" element={<ClientHistoryPage />} />
-              <Route path="/client/track/:id" element={<TrackPage />} />
-              <Route path="/client/pay/:id" element={<PayPage />} />
-            </Route>
-            {/* Anciens chemins client → redirection permanente */}
-            <Route path="/collect" element={<Navigate to="/client/access" replace />} />
-            <Route path="/track/:id" element={<Navigate to="/client/access" replace />} />
-            <Route path="/pay/:id" element={<Navigate to="/client/access" replace />} />
-            <Route path="/portal" element={<Navigate to="/client/access" replace />} />
+              {/* Portail Client — accès public par ticket + téléphone */}
+              <Route path="/client/access" element={<ClientAccessPage />} />
+              <Route path="/client/collect" element={<CollectPage />} />
+              <Route element={<RequireClientAccess />}>
+                <Route path="/client/dashboard" element={<ClientDashboardPage />} />
+                <Route path="/client/history" element={<ClientHistoryPage />} />
+                <Route path="/client/track/:id" element={<TrackPage />} />
+                <Route path="/client/pay/:id" element={<PayPage />} />
+              </Route>
+              {/* Anciens chemins client → redirection permanente */}
+              <Route path="/collect" element={<Navigate to="/client/access" replace />} />
+              <Route path="/track/:id" element={<Navigate to="/client/access" replace />} />
+              <Route path="/pay/:id" element={<Navigate to="/client/access" replace />} />
+              <Route path="/portal" element={<Navigate to="/client/access" replace />} />
 
-            {/* Portail Coursier (web + mobile) */}
-            <Route
-              path="/courier/dashboard"
-              element={
-                <ProtectedRoute roles={['coursier']}>
-                  <CourierDashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/courier/missions"
-              element={
-                <ProtectedRoute roles={['coursier']}>
-                  <MissionsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/courier/missions/:id"
-              element={
-                <ProtectedRoute roles={['coursier']}>
-                  <MissionDetailPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/courier/history"
-              element={
-                <ProtectedRoute roles={['coursier']}>
-                  <CourierHistoryPage />
-                </ProtectedRoute>
-              }
-            />
+              {/* Portail Coursier (web + mobile) */}
+              <Route
+                path="/courier/dashboard"
+                element={
+                  <ProtectedRoute roles={['coursier']}>
+                    <CourierDashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/courier/missions"
+                element={
+                  <ProtectedRoute roles={['coursier']}>
+                    <MissionsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/courier/missions/:id"
+                element={
+                  <ProtectedRoute roles={['coursier']}>
+                    <MissionDetailPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/courier/history"
+                element={
+                  <ProtectedRoute roles={['coursier']}>
+                    <CourierHistoryPage />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* 404 */}
-            <Route path="*" element={<RoleHome />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
+              {/* 404 */}
+              <Route path="*" element={<RoleHome />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
       </ClientAccessProvider>
     </AuthProvider>
   );
